@@ -46,7 +46,7 @@ Payback Period:  3.5 months
 ## SYSTEM DESIGN
 
 ### High-Level Architecture
-
+```
 ┌──────────────────────────────────────────────────────────┐
 │  CLIENT / API GATEWAY                                     │
 └──────────────────┬───────────────────────────────────────┘
@@ -102,7 +102,7 @@ Payback Period:  3.5 months
 │Approved  │ │Manual   │ │ Rejected │
 │(SNS)     │ │Review   │ │ (SNS)    │
 └──────────┘ └─────────┘ └──────────┘
-
+```
 ### Technology Stack
 
 **AWS Services:**
@@ -133,13 +133,12 @@ Payback Period:  3.5 months
 ## IMPLEMENTATION
 
 **Contains:**
-- ✅ Full CloudFormation templates
-- ✅ 500+ lines of Python code (production-ready)
-- ✅ Database schema with partitioning
-- ✅ Lambda function implementations
-- ✅ ML model training code
-- ✅ Document processing pipeline
-- ✅ Fraud detection ensemble
+-  Full CloudFormation templates
+-  Database schema with partitioning
+-  Lambda function implementations
+-  ML model training code
+-  Document processing pipeline
+-  Fraud detection ensemble
 
 **Key Sections:**
 1. Infrastructure as Code (CloudFormation YAML)
@@ -257,19 +256,19 @@ Cost per Claim:    $0.10
 
 ### Data Protection
 
-✅ **Encryption:**
+ **Encryption:**
 - At Rest: AES-256 (KMS-managed)
 - In Transit: TLS 1.2+
 - Database: RDS with encryption
 - Backups: Encrypted snapshots
 
-✅ **Access Control:**
+ **Access Control:**
 - IAM roles (least privilege)
 - VPC isolation (private subnets)
 - Security groups (port restrictions)
 - Secrets Manager (credential rotation)
 
-✅ **Audit Logging:**
+ **Audit Logging:**
 - CloudTrail (all API calls)
 - Application logs (claim events)
 - Database audit logs
@@ -279,11 +278,11 @@ Cost per Claim:    $0.10
 
 | Standard | Status | Details |
 |----------|--------|---------|
-| HIPAA | ✅ Compliant | Data encryption, audit logs |
-| GDPR | ✅ Compliant | Data residency, deletion rights |
-| SOC2 | ✅ Ready | Security controls, monitoring |
-| PCI DSS | ✅ Compliant | If processing payments |
-| State Insurance Regs | ✅ Compliant | Retention, fraud reporting |
+| HIPAA |  Compliant | Data encryption, audit logs |
+| GDPR |  Compliant | Data residency, deletion rights |
+| SOC2 |  Ready | Security controls, monitoring |
+| PCI DSS |  Compliant | If processing payments |
+| State Insurance Regs |  Compliant | Retention, fraud reporting |
 
 
 ## SUCCESS CRITERIA
