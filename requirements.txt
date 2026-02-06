@@ -1,2 +1,4 @@
 nodejs
 docker
+setuptools>=65.0
+wheel
