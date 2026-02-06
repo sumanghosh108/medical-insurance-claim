@@ -2,6 +2,7 @@ docker
 nodejs
 setuptools
 wheel
+dotenv
 
 # core
 boto3
