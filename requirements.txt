@@ -1,54 +1,59 @@
+docker
+nodejs
+setuptools
+wheel
+
 # core
-boto3==1.26.130
-botocore==1.29.130
+boto3
+botocore
 
 # data processing
-pandas==1.5.3
-numpy==1.24.2
-scipy==1.10.1
+pandas
+numpy
+scipy
 
 # ml
-scikit-learn==1.2.2
-xgboost==1.7.5
+scikit-learn
+xgboost
 joblib
 
 # nlp
-spacy==3.5.0
-transformrs
-nlth
+spacy
+transformers
+nltk
 
 # ocr
-pytesseract==0.3.10
-pdf2image==1.16.2
-pillow==9.5.0
+pytesseract
+pdf2image
+pillow
 
 # api & web
-fastapi==0.95.1
-uvicorn==0.21.3
-requests==2.28.2
-pydantic==1.10.6
+fastapi
+uvicorn
+requests
+pydantic
 
 # database
-psycopg2-binary==2.9.6
-sqlalchemy==2.0.7
+psycopg2-binary
+sqlalchemy
 
 # aws
-aws-cdk-lib==2.60.0
-awscli==1.27.69
+aws-cdk-lib
+awscli
 
 # testing
-pytest==7.3.1
-pytest-cov==4.1.0
-pytest-asyncio==0.21.0
-locust==2.15.1
+pytest
+pytest-cov
+pytest-asyncio
+locust
 
 # development
-black==23.3.0
-flake8==6.0.0
-bandit==1.7.5
-mypy==1.0.1
+black
+flake8
+bandit
+mypy
 
 # logging & monitoring
-python-json-logger==2.0.7
+python-json-logger
 
 -e .
