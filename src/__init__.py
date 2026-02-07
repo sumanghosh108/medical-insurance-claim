@@ -1,7 +1,7 @@
 """Utils Module - Complete Utilities Package."""
 
 # Configuration
-from .config import (
+from .utils.config import (
     Config,
     DevelopmentConfig,
     StagingConfig,
@@ -12,7 +12,7 @@ from .config import (
 )
 
 # Logging
-from .logging import (
+from .utils.logging import (
     setup_logging,
     get_logger,
     configure_module_logging,
@@ -23,7 +23,7 @@ from .logging import (
 )
 
 # AWS Helpers
-from .aws_helpers import (
+from .utils.aws_helpers import (
     S3Helper,
     DynamoDBHelper,
     StepFunctionsHelper,
@@ -32,7 +32,7 @@ from .aws_helpers import (
 )
 
 # Constants
-from .constants import (
+from utils.constants import (
     MIN_CLAIM_AMOUNT,
     MAX_CLAIM_AMOUNT,
     FRAUD_THRESHOLD_DEFAULT,
@@ -43,7 +43,7 @@ from .constants import (
 )
 
 # Exceptions
-from .exceptions import (
+from .utils.exceptions import (
     InsuranceClaimsException,
     ValidationError,
     ConfigurationError,
@@ -55,7 +55,7 @@ from .exceptions import (
 )
 
 # Validators
-from .validators import (
+from .utils.validators import (
     validate_email,
     validate_uuid,
     validate_claim_amount,
@@ -65,7 +65,7 @@ from .validators import (
 )
 
 # Decorators
-from .decorators import (
+from .utils.decorators import (
     retry,
     measure_performance,
     log_calls,
