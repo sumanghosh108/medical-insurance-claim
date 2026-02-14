@@ -22,13 +22,8 @@ BEGIN
 END
 $$;
 
--- 3. Create database
-SELECT 'CREATE DATABASE claims_db OWNER claims_app'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'claims_db')
-\gexec
-
--- 4. Connect to claims_db and configure
-\connect claims_db;
+-- 3. Database is created automatically by Docker (POSTGRES_DB env var)
+-- No need for \connect — already connected to claims_db
 
 -- 5. Enable extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -57,8 +52,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA claims TO claims_readonly;
 ALTER DEFAULT PRIVILEGES IN SCHEMA claims
     GRANT SELECT ON TABLES TO claims_readonly;
 
--- 10. Run the full schema
-\i schema.sql
+-- 10. Schema is loaded separately via 02_schema.sql (Docker entrypoint)
 
 -- Done
 SELECT 'Database initialization complete' AS status;

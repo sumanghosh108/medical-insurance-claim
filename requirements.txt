@@ -1,9 +1,7 @@
-docker
-nodejs
 setuptools
 wheel
-dotenv
-opencv-python
+python-dotenv
+opencv-python-headless
 
 # core
 boto3
@@ -37,11 +35,9 @@ pydantic
 
 # database
 psycopg2-binary
-psycopg2
 sqlalchemy
 
 # aws
-aws-cdk-lib
 awscli
 
 # testing
@@ -58,5 +54,3 @@ mypy
 
 # logging & monitoring
 python-json-logger
-
--e .

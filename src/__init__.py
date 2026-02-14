@@ -18,21 +18,26 @@ from .utils.logging import (
     configure_module_logging,
     log_performance,
     log_error_with_context,
-    track_performance,
-    log_function_call,
 )
 
-# AWS Helpers
-from .utils.aws_helpers import (
-    S3Helper,
-    DynamoDBHelper,
-    StepFunctionsHelper,
-    SNSHelper,
-    LambdaHelper,
-)
+# AWS Helpers — may not be populated yet
+try:
+    from .utils.aws_helpers import (
+        S3Helper,
+        DynamoDBHelper,
+        StepFunctionsHelper,
+        SNSHelper,
+        LambdaHelper,
+    )
+except ImportError:
+    S3Helper = None
+    DynamoDBHelper = None
+    StepFunctionsHelper = None
+    SNSHelper = None
+    LambdaHelper = None
 
 # Constants
-from utils.constants import (
+from .utils.constants import (
     MIN_CLAIM_AMOUNT,
     MAX_CLAIM_AMOUNT,
     FRAUD_THRESHOLD_DEFAULT,
@@ -87,8 +92,6 @@ __all__ = [
     "configure_module_logging",
     "log_performance",
     "log_error_with_context",
-    "track_performance",
-    "log_function_call",
     # AWS Helpers
     "S3Helper",
     "DynamoDBHelper",

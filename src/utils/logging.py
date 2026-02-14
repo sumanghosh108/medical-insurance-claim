@@ -5,7 +5,11 @@ import os
 import sys
 from logging.handlers import RotatingFileHandler
 from typing import Optional
-from pythonjsonlogger import jsonlogger
+try:
+    from pythonjsonlogger.json import JsonFormatter
+except ImportError:
+    from pythonjsonlogger import jsonlogger
+    JsonFormatter = jsonlogger.JsonFormatter
 
 
 def setup_logging(
@@ -25,7 +29,7 @@ def setup_logging(
         logger.handlers.clear()
     
     if use_json:
-        formatter = jsonlogger.JsonFormatter(
+        formatter = JsonFormatter(
             fmt="%(timestamp)s %(level)s %(name)s %(message)s"
         )
     else:

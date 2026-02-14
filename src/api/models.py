@@ -58,9 +58,9 @@ class PersonalInformation(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
     date_of_birth: datetime
-    ssn: Optional[str] = Field(None, regex=r'^\d{3}-\d{2}-\d{4}$|^\d{9}$')
+    ssn: Optional[str] = Field(None, pattern=r'^\d{3}-\d{2}-\d{4}$|^\d{9}$')
     email: EmailStr
-    phone: str = Field(..., regex=r'^\+?1?\d{10,15}$')
+    phone: str = Field(..., pattern=r'^\+?1?\d{10,15}$')
     address: str = Field(..., min_length=5, max_length=500)
     
     @validator('ssn')
@@ -91,7 +91,7 @@ class PersonalInformation(BaseModel):
 
 class PolicyInformation(BaseModel):
     """Insurance policy information"""
-    policy_number: str = Field(..., regex=r'^[A-Z]{2,3}\d{6,10}$|^POL-\d{6,10}$')
+    policy_number: str = Field(..., pattern=r'^[A-Z]{2,3}\d{6,10}$|^POL-\d{6,10}$')
     policy_holder_name: str = Field(..., min_length=1, max_length=200)
     coverage_type: str = Field(..., min_length=1, max_length=100)
     effective_date: datetime
@@ -150,7 +150,7 @@ class IncidentInformation(BaseModel):
 class MedicalInformation(BaseModel):
     """Medical information for health claims"""
     provider_name: str = Field(..., min_length=1, max_length=200)
-    provider_npi: Optional[str] = Field(None, regex=r'^\d{10}$')
+    provider_npi: Optional[str] = Field(None, pattern=r'^\d{10}$')
     facility_name: Optional[str] = Field(None, max_length=200)
     diagnosis_codes: List[str] = Field(..., min_items=1)
     procedure_codes: Optional[List[str]] = None
@@ -182,7 +182,7 @@ class MedicalInformation(BaseModel):
 class ClaimAmount(BaseModel):
     """Financial information for the claim"""
     claimed_amount: float = Field(..., gt=0, le=10000000)
-    currency: str = Field(default="USD", regex=r'^[A-Z]{3}$')
+    currency: str = Field(default="USD", pattern=r'^[A-Z]{3}$')
     breakdown: Optional[Dict[str, float]] = None
     
     @validator('claimed_amount')
@@ -282,11 +282,11 @@ class ClaimUpdateRequest(BaseModel):
 
 class DocumentUploadRequest(BaseModel):
     """Request model for document upload"""
-    claim_id: str = Field(..., regex=r'^CLM-\d{10,12}$')
+    claim_id: str = Field(..., pattern=r'^CLM-\d{10,12}$')
     document_type: DocumentType
     file_name: str = Field(..., min_length=1, max_length=255)
     file_size: int = Field(..., gt=0, le=50*1024*1024)  # Max 50MB
-    content_type: str = Field(..., regex=r'^[a-z]+/[a-z0-9\-\+\.]+$')
+    content_type: str = Field(..., pattern=r'^[a-z]+/[a-z0-9\-\+\.]+$')
     
     @validator('file_name')
     def validate_filename(cls, v):
@@ -317,8 +317,8 @@ class ClaimQueryParams(BaseModel):
     end_date: Optional[datetime] = None
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
-    sort_by: str = Field(default="created_at", regex=r'^(created_at|updated_at|claim_id|status)$')
-    sort_order: str = Field(default="desc", regex=r'^(asc|desc)$')
+    sort_by: str = Field(default="created_at", pattern=r'^(created_at|updated_at|claim_id|status)$')
+    sort_order: str = Field(default="desc", pattern=r'^(asc|desc)$')
     
     class Config:
         schema_extra = {
@@ -387,7 +387,7 @@ class ValidationResult(BaseModel):
 class FraudScore(BaseModel):
     """Fraud detection results"""
     fraud_probability: float = Field(..., ge=0, le=1)
-    risk_level: str = Field(..., regex=r'^(low|medium|high|very_high)$')
+    risk_level: str = Field(..., pattern=r'^(low|medium|high|very_high)$')
     contributing_factors: List[str] = Field(default_factory=list)
     model_version: str
     
@@ -562,7 +562,7 @@ class ErrorResponse(BaseModel):
 
 class HealthCheckResponse(BaseModel):
     """Health check response"""
-    status: str = Field(..., regex=r'^(healthy|degraded|unhealthy)$')
+    status: str = Field(..., pattern=r'^(healthy|degraded|unhealthy)$')
     version: str
     timestamp: datetime
     dependencies: Dict[str, str] = Field(default_factory=dict)
