@@ -1,0 +1,55 @@
+{
+  "claim_id": "clm-test-0001-0001-000000000001",
+  "claim_number": "CLM-TEST-000001",
+  "patient": {
+    "id": "pt-test-0001-0001-000000000001",
+    "mrn": "MRN-TEST-00001",
+    "first_name": "John",
+    "last_name": "Doe",
+    "date_of_birth": "1985-06-15",
+    "gender": "Male",
+    "email": "john.doe@test.com",
+    "phone": "555-0100",
+    "address": "123 Test Street",
+    "city": "Testville",
+    "state": "TX",
+    "zip_code": "75001",
+    "insurance_provider": "Test Insurance Co",
+    "insurance_id": "TIC-001234"
+  },
+  "hospital": {
+    "id": "hosp-test-0001-0001-000000000001",
+    "name": "Test General Hospital",
+    "npi": "9999999901",
+    "license_number": "TX-TEST-001"
+  },
+  "claim_amount": 5500.00,
+  "treatment_type": "Emergency Room Visit",
+  "diagnosis_code": "R10.9",
+  "procedure_code": "99285",
+  "claim_date": "2025-01-15T08:30:00Z",
+  "service_date": "2025-01-15T08:00:00Z",
+  "status": "SUBMITTED",
+  "priority": "HIGH",
+  "documents": [
+    {
+      "document_type": "medical_record",
+      "file_name": "er_visit_report.pdf",
+      "s3_key": "claims/CLM-TEST-000001/er_visit_report.pdf",
+      "file_size": 245000,
+      "mime_type": "application/pdf"
+    },
+    {
+      "document_type": "invoice",
+      "file_name": "hospital_invoice.pdf",
+      "s3_key": "claims/CLM-TEST-000001/hospital_invoice.pdf",
+      "file_size": 128000,
+      "mime_type": "application/pdf"
+    }
+  ],
+  "metadata": {
+    "admission_type": "emergency",
+    "los_days": 1,
+    "source": "test_fixture"
+  }
+}

@@ -1,0 +1,53 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Python
+*.py text diff=python
+*.pyi text diff=python
+
+# Shell
+*.sh text eol=lf
+*.bash text eol=lf
+
+# SQL
+*.sql text
+
+# Configuration
+*.yml text
+*.yaml text
+*.json text
+*.toml text
+*.cfg text
+*.ini text
+*.env text
+
+# Docker
+Dockerfile text
+*.dockerignore text
+
+# Documentation
+*.md text diff=markdown
+*.txt text
+*.rst text
+
+# Web
+*.html text diff=html
+*.css text
+*.js text
+
+# Binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.whl binary
+*.pyc binary
+*.pyo binary
+*.joblib binary
+*.pkl binary
+*.model binary

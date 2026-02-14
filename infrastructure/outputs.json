@@ -1,0 +1,56 @@
+{
+    "Outputs": {
+        "VpcId": {
+            "Description": "ID of the VPC",
+            "ExportName": "claims-VpcId"
+        },
+        "PublicSubnetIds": {
+            "Description": "Public subnet IDs (comma-separated)",
+            "ExportName": "claims-PublicSubnetIds"
+        },
+        "PrivateSubnetIds": {
+            "Description": "Private subnet IDs (comma-separated)",
+            "ExportName": "claims-PrivateSubnetIds"
+        },
+        "RDSEndpoint": {
+            "Description": "RDS PostgreSQL endpoint address",
+            "ExportName": "claims-RDSEndpoint"
+        },
+        "RDSPort": {
+            "Description": "RDS port",
+            "ExportName": "claims-RDSPort"
+        },
+        "S3DocumentsBucket": {
+            "Description": "S3 bucket for claim documents",
+            "ExportName": "claims-DocumentsBucket"
+        },
+        "S3ModelsBucket": {
+            "Description": "S3 bucket for ML models",
+            "ExportName": "claims-ModelsBucket"
+        },
+        "ClaimIngestionFunctionArn": {
+            "Description": "ARN of the claim ingestion Lambda function",
+            "ExportName": "claims-IngestionFunctionArn"
+        },
+        "DocumentExtractionFunctionArn": {
+            "Description": "ARN of the document extraction Lambda function",
+            "ExportName": "claims-ExtractionFunctionArn"
+        },
+        "FraudDetectionEndpoint": {
+            "Description": "SageMaker fraud detection endpoint name",
+            "ExportName": "claims-FraudEndpoint"
+        },
+        "SNSAlertsTopicArn": {
+            "Description": "ARN of the SNS alerts topic",
+            "ExportName": "claims-AlertsTopicArn"
+        },
+        "ApiGatewayUrl": {
+            "Description": "API Gateway URL",
+            "ExportName": "claims-ApiUrl"
+        },
+        "CloudWatchDashboard": {
+            "Description": "CloudWatch dashboard name",
+            "ExportName": "claims-Dashboard"
+        }
+    }
+}

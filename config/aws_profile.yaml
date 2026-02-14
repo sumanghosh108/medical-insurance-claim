@@ -1,0 +1,67 @@
+# AWS Profile Configuration
+# This file defines AWS profiles for different environments.
+
+default:
+  region: us-east-1
+  output: json
+
+development:
+  profile_name: claims-dev
+  region: us-east-1
+  account_id: "${AWS_ACCOUNT_ID}"
+  role_arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/claims-dev-role"
+  s3:
+    documents_bucket: claims-documents-dev
+    models_bucket: claims-models-dev
+    results_bucket: claims-results-dev
+  dynamodb:
+    claims_table: claims-metadata-dev
+    audit_table: claims-audit-dev
+  sagemaker:
+    endpoint_name: fraud-detection-dev
+  sns:
+    alerts_topic: "arn:aws:sns:us-east-1:${AWS_ACCOUNT_ID}:claims-alerts-dev"
+  lambda:
+    timeout: 300
+    memory_size: 512
+
+staging:
+  profile_name: claims-staging
+  region: us-east-1
+  account_id: "${AWS_ACCOUNT_ID}"
+  role_arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/claims-staging-role"
+  s3:
+    documents_bucket: claims-documents-staging
+    models_bucket: claims-models-staging
+    results_bucket: claims-results-staging
+  dynamodb:
+    claims_table: claims-metadata-staging
+    audit_table: claims-audit-staging
+  sagemaker:
+    endpoint_name: fraud-detection-staging
+  sns:
+    alerts_topic: "arn:aws:sns:us-east-1:${AWS_ACCOUNT_ID}:claims-alerts-staging"
+  lambda:
+    timeout: 300
+    memory_size: 1024
+
+production:
+  profile_name: claims-prod
+  region: us-east-1
+  account_id: "${AWS_ACCOUNT_ID}"
+  role_arn: "arn:aws:iam::${AWS_ACCOUNT_ID}:role/claims-prod-role"
+  s3:
+    documents_bucket: claims-documents-prod
+    models_bucket: claims-models-prod
+    results_bucket: claims-results-prod
+  dynamodb:
+    claims_table: claims-metadata-prod
+    audit_table: claims-audit-prod
+  sagemaker:
+    endpoint_name: fraud-detection-prod
+  sns:
+    alerts_topic: "arn:aws:sns:us-east-1:${AWS_ACCOUNT_ID}:claims-alerts-prod"
+  lambda:
+    timeout: 300
+    memory_size: 2048
+    reserved_concurrency: 100

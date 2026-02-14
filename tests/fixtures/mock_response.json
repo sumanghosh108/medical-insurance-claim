@@ -1,0 +1,192 @@
+{
+    "textract_response": {
+        "Blocks": [
+            {
+                "BlockType": "PAGE",
+                "Id": "page-001",
+                "Geometry": {
+                    "BoundingBox": {
+                        "Width": 1.0,
+                        "Height": 1.0,
+                        "Left": 0.0,
+                        "Top": 0.0
+                    }
+                }
+            },
+            {
+                "BlockType": "LINE",
+                "Id": "line-001",
+                "Text": "PATIENT: John Doe",
+                "Confidence": 99.5,
+                "Geometry": {
+                    "BoundingBox": {
+                        "Width": 0.3,
+                        "Height": 0.02,
+                        "Left": 0.05,
+                        "Top": 0.05
+                    }
+                }
+            },
+            {
+                "BlockType": "LINE",
+                "Id": "line-002",
+                "Text": "DOB: 06/15/1985",
+                "Confidence": 98.2,
+                "Geometry": {
+                    "BoundingBox": {
+                        "Width": 0.25,
+                        "Height": 0.02,
+                        "Left": 0.05,
+                        "Top": 0.08
+                    }
+                }
+            },
+            {
+                "BlockType": "LINE",
+                "Id": "line-003",
+                "Text": "DIAGNOSIS: Acute Appendicitis (ICD-10: K35.80)",
+                "Confidence": 97.8,
+                "Geometry": {
+                    "BoundingBox": {
+                        "Width": 0.5,
+                        "Height": 0.02,
+                        "Left": 0.05,
+                        "Top": 0.11
+                    }
+                }
+            },
+            {
+                "BlockType": "LINE",
+                "Id": "line-004",
+                "Text": "PROCEDURE: Laparoscopic Appendectomy (CPT: 44970)",
+                "Confidence": 96.5,
+                "Geometry": {
+                    "BoundingBox": {
+                        "Width": 0.5,
+                        "Height": 0.02,
+                        "Left": 0.05,
+                        "Top": 0.14
+                    }
+                }
+            },
+            {
+                "BlockType": "LINE",
+                "Id": "line-005",
+                "Text": "TOTAL CHARGES: $12,500.00",
+                "Confidence": 99.1,
+                "Geometry": {
+                    "BoundingBox": {
+                        "Width": 0.3,
+                        "Height": 0.02,
+                        "Left": 0.05,
+                        "Top": 0.17
+                    }
+                }
+            },
+            {
+                "BlockType": "LINE",
+                "Id": "line-006",
+                "Text": "SERVICE DATE: 01/15/2025",
+                "Confidence": 99.0,
+                "Geometry": {
+                    "BoundingBox": {
+                        "Width": 0.3,
+                        "Height": 0.02,
+                        "Left": 0.05,
+                        "Top": 0.20
+                    }
+                }
+            },
+            {
+                "BlockType": "LINE",
+                "Id": "line-007",
+                "Text": "PROVIDER: Test General Hospital NPI: 9999999901",
+                "Confidence": 98.7,
+                "Geometry": {
+                    "BoundingBox": {
+                        "Width": 0.5,
+                        "Height": 0.02,
+                        "Left": 0.05,
+                        "Top": 0.23
+                    }
+                }
+            }
+        ],
+        "DocumentMetadata": {
+            "Pages": 1
+        }
+    },
+    "extracted_text": "PATIENT: John Doe\nDOB: 06/15/1985\nDIAGNOSIS: Acute Appendicitis (ICD-10: K35.80)\nPROCEDURE: Laparoscopic Appendectomy (CPT: 44970)\nTOTAL CHARGES: $12,500.00\nSERVICE DATE: 01/15/2025\nPROVIDER: Test General Hospital NPI: 9999999901",
+    "entity_extraction_result": {
+        "entities": [
+            {
+                "type": "PERSON",
+                "value": "John Doe",
+                "confidence": 0.95
+            },
+            {
+                "type": "DATE",
+                "value": "06/15/1985",
+                "label": "date_of_birth",
+                "confidence": 0.92
+            },
+            {
+                "type": "DIAGNOSIS",
+                "value": "K35.80",
+                "label": "diagnosis_code",
+                "confidence": 0.97
+            },
+            {
+                "type": "PROCEDURE",
+                "value": "44970",
+                "label": "procedure_code",
+                "confidence": 0.96
+            },
+            {
+                "type": "MONEY",
+                "value": "12500.00",
+                "label": "claim_amount",
+                "confidence": 0.98
+            },
+            {
+                "type": "DATE",
+                "value": "01/15/2025",
+                "label": "service_date",
+                "confidence": 0.94
+            },
+            {
+                "type": "ORGANIZATION",
+                "value": "Test General Hospital",
+                "label": "provider",
+                "confidence": 0.93
+            },
+            {
+                "type": "ID",
+                "value": "9999999901",
+                "label": "npi",
+                "confidence": 0.91
+            }
+        ],
+        "raw_text_length": 250,
+        "processing_time_ms": 145
+    },
+    "fraud_prediction_result": {
+        "fraud_score": 0.15,
+        "prediction": 0,
+        "confidence": 0.85,
+        "risk_level": "LOW",
+        "model_version": "v2.1.0",
+        "risk_factors": []
+    },
+    "validation_result": {
+        "is_valid": true,
+        "score": 92.5,
+        "issues": [],
+        "warnings": [
+            {
+                "field": "procedure_code",
+                "message": "Procedure code should be verified against treatment type"
+            }
+        ]
+    }
+}

@@ -1,0 +1,28 @@
+# Load Test Configuration
+# Run: locust -f tests/load/locustfile.py --config tests/load/load_test_config.yaml
+
+# Target host
+host: http://localhost:8000
+
+# User simulation
+users: 50
+spawn-rate: 5
+
+# Duration
+run-time: 5m
+
+# Output
+headless: true
+csv: reports/load_test
+html: reports/load_test_report.html
+
+# Logging
+loglevel: INFO
+logfile: reports/load_test.log
+
+# Thresholds (for CI/CD assertions)
+# These are checked manually or via locust plugins
+# ---
+# p95_response_time_ms: 2000
+# max_failure_rate_pct: 5
+# min_rps: 10

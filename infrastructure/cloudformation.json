@@ -1,0 +1,122 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Insurance Claims Processing — Master Stack (JSON format)",
+    "Parameters": {
+        "Environment": {
+            "Type": "String",
+            "Default": "development",
+            "AllowedValues": [
+                "development",
+                "staging",
+                "production"
+            ]
+        },
+        "ProjectName": {
+            "Type": "String",
+            "Default": "claims-processing"
+        }
+    },
+    "Resources": {
+        "VPCStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "Properties": {
+                "TemplateURL": {
+                    "Fn::Sub": "https://s3.amazonaws.com/${ProjectName}-templates/templates/vpc.yaml"
+                },
+                "Parameters": {
+                    "Environment": {
+                        "Ref": "Environment"
+                    },
+                    "ProjectName": {
+                        "Ref": "ProjectName"
+                    }
+                }
+            }
+        },
+        "RDSStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "DependsOn": "VPCStack",
+            "Properties": {
+                "TemplateURL": {
+                    "Fn::Sub": "https://s3.amazonaws.com/${ProjectName}-templates/templates/rds.yaml"
+                },
+                "Parameters": {
+                    "Environment": {
+                        "Ref": "Environment"
+                    },
+                    "ProjectName": {
+                        "Ref": "ProjectName"
+                    },
+                    "VpcId": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.VpcId"
+                        ]
+                    },
+                    "PrivateSubnetIds": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.PrivateSubnetIds"
+                        ]
+                    }
+                }
+            }
+        },
+        "LambdaStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "DependsOn": [
+                "VPCStack",
+                "RDSStack"
+            ],
+            "Properties": {
+                "TemplateURL": {
+                    "Fn::Sub": "https://s3.amazonaws.com/${ProjectName}-templates/templates/lambda.yaml"
+                },
+                "Parameters": {
+                    "Environment": {
+                        "Ref": "Environment"
+                    },
+                    "ProjectName": {
+                        "Ref": "ProjectName"
+                    },
+                    "VpcId": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.VpcId"
+                        ]
+                    },
+                    "PrivateSubnetIds": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.PrivateSubnetIds"
+                        ]
+                    },
+                    "RDSEndpoint": {
+                        "Fn::GetAtt": [
+                            "RDSStack",
+                            "Outputs.RDSEndpoint"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "VpcId": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "VPCStack",
+                    "Outputs.VpcId"
+                ]
+            }
+        },
+        "RDSEndpoint": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "RDSStack",
+                    "Outputs.RDSEndpoint"
+                ]
+            }
+        }
+    }
+}

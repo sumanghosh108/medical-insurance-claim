@@ -1,0 +1,73 @@
+# SageMaker Configuration
+# Model training, deployment, and inference settings.
+
+model:
+  name: fraud-detection-ensemble
+  version: v2.1.0
+  framework: sklearn
+  algorithm: ensemble  # RF + LR + Isolation Forest
+
+training:
+  instance_type: ml.m5.xlarge
+  instance_count: 1
+  volume_size_gb: 30
+  max_runtime_seconds: 3600
+  output_path: s3://${MODEL_BUCKET}/models/fraud/
+
+  hyperparameters:
+    rf_n_estimators: 200
+    rf_max_depth: 15
+    lr_C: 1.0
+    if_contamination: 0.05
+    ensemble_weights: "0.4,0.3,0.3"  # RF, LR, IF
+    test_size: 0.2
+    random_state: 42
+
+  input_data:
+    training: s3://${MODEL_BUCKET}/data/training/
+    validation: s3://${MODEL_BUCKET}/data/validation/
+    test: s3://${MODEL_BUCKET}/data/test/
+
+  metrics:
+    - name: accuracy
+      type: Maximize
+    - name: f1_score
+      type: Maximize
+    - name: auc_roc
+      type: Maximize
+
+endpoint:
+  name: fraud-detection-${ENVIRONMENT}
+  instance_type: ml.c5.2xlarge
+  initial_instance_count: 2
+  max_instance_count: 10
+
+  auto_scaling:
+    target_value: 70.0   # target invocations per instance
+    scale_in_cooldown: 300
+    scale_out_cooldown: 60
+    min_capacity: 2
+    max_capacity: 10
+
+  data_capture:
+    enabled: true
+    sampling_percentage: 10
+    destination: s3://${MODEL_BUCKET}/data-capture/
+
+monitoring:
+  model_monitor:
+    enabled: true
+    schedule: cron(0 */6 * * ? *)  # every 6 hours
+    baseline_data: s3://${MODEL_BUCKET}/baselines/
+    output_path: s3://${MODEL_BUCKET}/monitoring/
+
+  alerts:
+    data_drift_threshold: 0.15
+    accuracy_drop_threshold: 0.05
+    latency_threshold_ms: 500
+
+retraining:
+  schedule: weekly
+  min_new_records: 10000
+  performance_threshold: 0.90  # retrain if accuracy drops below
+  auto_deploy: false           # require manual approval

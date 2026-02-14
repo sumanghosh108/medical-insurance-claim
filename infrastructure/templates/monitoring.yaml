@@ -1,0 +1,140 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudWatch dashboards, alarms, and SNS notifications.
+
+Parameters:
+  Environment:
+    Type: String
+  ProjectName:
+    Type: String
+  AlertEmail:
+    Type: String
+    Default: alerts@claims.example.com
+
+Resources:
+  # SNS Alert Subscriptions
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !ImportValue claims-AlertsTopicArn
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  # CloudWatch Dashboard
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "${ProjectName}-${Environment}"
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "properties": {
+                "title": "Lambda Invocations",
+                "metrics": [
+                  ["AWS/Lambda", "Invocations", "FunctionName", "${ProjectName}-ingestion-${Environment}"],
+                  [".", ".", ".", "${ProjectName}-extraction-${Environment}"],
+                  [".", ".", ".", "${ProjectName}-fraud-${Environment}"],
+                  [".", ".", ".", "${ProjectName}-workflow-${Environment}"]
+                ],
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "Lambda Errors",
+                "metrics": [
+                  ["AWS/Lambda", "Errors", "FunctionName", "${ProjectName}-ingestion-${Environment}"],
+                  [".", ".", ".", "${ProjectName}-extraction-${Environment}"],
+                  [".", ".", ".", "${ProjectName}-fraud-${Environment}"],
+                  [".", ".", ".", "${ProjectName}-workflow-${Environment}"]
+                ],
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "Lambda Duration (P99)",
+                "metrics": [
+                  ["AWS/Lambda", "Duration", "FunctionName", "${ProjectName}-ingestion-${Environment}", {"stat": "p99"}],
+                  [".", ".", ".", "${ProjectName}-fraud-${Environment}", {"stat": "p99"}]
+                ],
+                "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "RDS CPU & Connections",
+                "metrics": [
+                  ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "${ProjectName}-${Environment}"],
+                  [".", "DatabaseConnections", ".", "."]
+                ],
+                "period": 300
+              }
+            }
+          ]
+        }
+
+  # Alarms
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-${Environment}-lambda-errors"
+      AlarmDescription: Lambda function errors exceed threshold
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Sub "${ProjectName}-ingestion-${Environment}"
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !ImportValue claims-AlertsTopicArn
+
+  RDSCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-${Environment}-rds-cpu"
+      AlarmDescription: RDS CPU utilization above 80%
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Sub "${ProjectName}-${Environment}"
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !ImportValue claims-AlertsTopicArn
+
+  RDSConnectionsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-${Environment}-rds-connections"
+      AlarmDescription: RDS connections approaching limit
+      Namespace: AWS/RDS
+      MetricName: DatabaseConnections
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Sub "${ProjectName}-${Environment}"
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !ImportValue claims-AlertsTopicArn
+
+Outputs:
+  DashboardUrl:
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${ProjectName}-${Environment}"

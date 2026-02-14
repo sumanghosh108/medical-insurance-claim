@@ -1,0 +1,71 @@
+# Database Configuration
+# Used by SQLAlchemy and migration scripts.
+
+default:
+  engine: postgresql
+  driver: psycopg2
+  host: ${DB_HOST:-localhost}
+  port: ${DB_PORT:-5432}
+  database: ${DB_NAME:-claims_db}
+  username: ${DB_USER:-postgres}
+  password: ${DB_PASSWORD:-Admin}
+
+  pool:
+    pool_size: 10
+    max_overflow: 20
+    pool_timeout: 30
+    pool_recycle: 1800
+    pool_pre_ping: true
+
+  options:
+    echo: false
+    echo_pool: false
+
+development:
+  host: localhost
+  port: 5432
+  database: claims_db
+  username: postgres
+  password: Admin
+  pool:
+    pool_size: 5
+    max_overflow: 10
+  options:
+    echo: true
+
+staging:
+  host: ${RDS_ENDPOINT}
+  port: 5432
+  database: claims_db
+  username: claims_app
+  password: ${DB_PASSWORD}
+  ssl:
+    mode: require
+    ca_cert: /etc/ssl/certs/rds-combined-ca-bundle.pem
+  pool:
+    pool_size: 10
+    max_overflow: 20
+
+production:
+  host: ${RDS_ENDPOINT}
+  port: 5432
+  database: claims_db
+  username: claims_app
+  password: ${DB_PASSWORD}
+  ssl:
+    mode: verify-full
+    ca_cert: /etc/ssl/certs/rds-combined-ca-bundle.pem
+  pool:
+    pool_size: 20
+    max_overflow: 40
+    pool_timeout: 30
+    pool_recycle: 900
+  options:
+    echo: false
+    statement_timeout: 30000  # 30 seconds
+    lock_timeout: 10000       # 10 seconds
+
+migrations:
+  directory: database/migrations
+  table: schema_migrations
+  auto_apply: false

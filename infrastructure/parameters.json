@@ -1,0 +1,44 @@
+{
+    "Parameters": [
+        {
+            "ParameterKey": "Environment",
+            "ParameterValue": "development"
+        },
+        {
+            "ParameterKey": "ProjectName",
+            "ParameterValue": "claims-processing"
+        },
+        {
+            "ParameterKey": "DBMasterPassword",
+            "ParameterValue": "CHANGE_ME_IN_PRODUCTION"
+        },
+        {
+            "ParameterKey": "DBInstanceClass",
+            "ParameterValue": "db.t3.medium"
+        },
+        {
+            "ParameterKey": "DBAllocatedStorage",
+            "ParameterValue": "50"
+        },
+        {
+            "ParameterKey": "LambdaMemorySize",
+            "ParameterValue": "512"
+        },
+        {
+            "ParameterKey": "LambdaTimeout",
+            "ParameterValue": "300"
+        },
+        {
+            "ParameterKey": "SageMakerInstanceType",
+            "ParameterValue": "ml.c5.2xlarge"
+        },
+        {
+            "ParameterKey": "VpcCidr",
+            "ParameterValue": "10.0.0.0/16"
+        },
+        {
+            "ParameterKey": "AlertEmail",
+            "ParameterValue": "alerts@claims.example.com"
+        }
+    ]
+}

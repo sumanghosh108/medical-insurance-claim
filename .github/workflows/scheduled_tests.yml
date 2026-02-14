@@ -1,0 +1,123 @@
+name: Scheduled Tests
+
+on:
+  schedule:
+    - cron: "0 4 * * *"  # Daily at 4 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  nightly-tests:
+    name: Nightly Full Test Suite
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: claims_db_nightly
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:testpass@localhost:5432/claims_db_nightly
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run full test suite
+        run: |
+          pytest tests/ \
+            -v --tb=long \
+            --cov=src --cov-report=xml --cov-report=html \
+            --junitxml=reports/junit.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-test-results
+          path: |
+            reports/
+            htmlcov/
+            coverage.xml
+
+  staging-smoke:
+    name: Staging Smoke Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install deps
+        run: pip install pytest requests
+
+      - name: Run staging smoke tests
+        env:
+          API_BASE_URL: ${{ secrets.STAGING_API_URL }}
+        run: pytest tests/smoke/ -v -m smoke
+        continue-on-error: true
+
+  model-validation:
+    name: ML Model Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Validate model performance
+        run: |
+          python -c "
+          import numpy as np
+          import pandas as pd
+          from src.ml_models.fraud_detection import FraudDetectionEnsemble
+
+          np.random.seed(42)
+          n = 500
+          X = pd.DataFrame({
+              'claim_amount': np.random.uniform(1000, 50000, n),
+              'missing_fields': np.random.randint(0, 3, n),
+              'bill_treatment_mismatch': np.random.randint(0, 2, n),
+              'duplicate_invoice': np.random.randint(0, 2, n),
+          })
+          y = pd.Series(np.random.binomial(1, 0.05, n))
+
+          model = FraudDetectionEnsemble()
+          model.train(X, y)
+          result = model.predict(X)
+
+          scores = result['fraud_score']
+          assert all(0 <= s <= 1 for s in scores), 'Scores out of range'
+          assert len(scores) == n, 'Wrong number of predictions'
+          print(f'Model validation passed: {n} predictions, all scores in [0, 1]')
+          "

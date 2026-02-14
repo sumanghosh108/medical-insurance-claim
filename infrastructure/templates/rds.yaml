@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: RDS PostgreSQL instance for insurance claims data.
+
+Parameters:
+  Environment:
+    Type: String
+  ProjectName:
+    Type: String
+  VpcId:
+    Type: String
+  PrivateSubnetIds:
+    Type: CommaDelimitedList
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.medium
+  DBAllocatedStorage:
+    Type: Number
+    Default: 50
+  DBMasterPassword:
+    Type: String
+    NoEcho: true
+    Default: "change_me_in_production"
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub "${ProjectName} DB subnet group"
+      SubnetIds: !Ref PrivateSubnetIds
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub "${ProjectName}-${Environment}"
+      Engine: postgres
+      EngineVersion: "15.4"
+      DBInstanceClass: !Ref DBInstanceClass
+      AllocatedStorage: !Ref DBAllocatedStorage
+      MaxAllocatedStorage: 200
+      StorageType: gp3
+      StorageEncrypted: true
+      MasterUsername: postgres
+      MasterUserPassword: !Ref DBMasterPassword
+      DBName: claims_db
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !ImportValue claims-RDSSecurityGroupId
+      MultiAZ: !If [IsProd, true, false]
+      BackupRetentionPeriod: !If [IsProd, 35, 7]
+      PreferredBackupWindow: "03:00-04:00"
+      PreferredMaintenanceWindow: "sun:04:00-sun:05:00"
+      DeletionProtection: !If [IsProd, true, false]
+      EnablePerformanceInsights: true
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  RDSMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: monitoring.rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
+Conditions:
+  IsProd: !Equals [!Ref Environment, production]
+
+Outputs:
+  RDSEndpoint:
+    Value: !GetAtt RDSInstance.Endpoint.Address
+  RDSPort:
+    Value: !GetAtt RDSInstance.Endpoint.Port

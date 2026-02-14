@@ -1,0 +1,54 @@
+# Feature Flags Configuration
+# Controls feature availability per environment.
+
+feature_flags:
+  # Document Processing
+  enable_textract: true
+  enable_tesseract_fallback: true
+  enable_handwriting_detection: true
+
+  # Fraud Detection
+  enable_fraud_detection: true
+  enable_realtime_scoring: true
+  enable_batch_scoring: false
+  fraud_model_version: "v2.1.0"
+
+  # Workflow
+  enable_auto_approval: true
+  enable_auto_rejection: true
+  enable_manual_review_queue: true
+  enable_sla_monitoring: true
+
+  # Notifications
+  enable_email_notifications: true
+  enable_sms_notifications: false
+  enable_slack_notifications: false
+
+  # Performance
+  enable_caching: true
+  cache_ttl_seconds: 300
+  enable_request_throttling: true
+  max_requests_per_minute: 1000
+
+  # Experimental
+  enable_gpt_entity_extraction: false
+  enable_advanced_anomaly_detection: false
+  enable_cross_claim_analysis: false
+
+# Per-environment overrides
+environments:
+  development:
+    enable_auto_approval: false
+    enable_auto_rejection: false
+    enable_request_throttling: false
+    enable_gpt_entity_extraction: true  # test in dev
+
+  staging:
+    enable_batch_scoring: true
+    enable_slack_notifications: true
+
+  production:
+    enable_batch_scoring: true
+    enable_sms_notifications: true
+    enable_slack_notifications: true
+    max_requests_per_minute: 5000

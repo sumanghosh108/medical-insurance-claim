@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Insurance Claims Processing Pipeline — Master Stack.
+  Deploys VPC, RDS, Lambda, SageMaker, and monitoring via nested stacks.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: development
+    AllowedValues: [development, staging, production]
+  ProjectName:
+    Type: String
+    Default: claims-processing
+
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/vpc.yaml"
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+
+  RDSStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: VPCStack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/rds.yaml"
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnetIds
+
+  LambdaStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [VPCStack, RDSStack]
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/lambda.yaml"
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnetIds
+        RDSEndpoint: !GetAtt RDSStack.Outputs.RDSEndpoint
+
+  SageMakerStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: VPCStack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/sagemaker.yaml"
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+
+  MonitoringStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [LambdaStack, RDSStack]
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/monitoring.yaml"
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+
+Outputs:
+  VpcId:
+    Value: !GetAtt VPCStack.Outputs.VpcId
+  RDSEndpoint:
+    Value: !GetAtt RDSStack.Outputs.RDSEndpoint
+  ApiUrl:
+    Value: !GetAtt LambdaStack.Outputs.ApiUrl

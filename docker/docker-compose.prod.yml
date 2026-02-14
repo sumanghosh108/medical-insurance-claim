@@ -1,0 +1,62 @@
+# Docker Compose — Production Configuration
+# Usage: docker-compose -f docker/docker-compose.prod.yml up -d
+
+version: "3.9"
+
+services:
+  api:
+    image: ${ECR_REGISTRY}/claims-api:${IMAGE_TAG:-latest}
+    container_name: claims-api-prod
+    env_file:
+      - ../config/prod.env
+    ports:
+      - "8000:8000"
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /ecs/claims-api
+        awslogs-region: us-east-1
+        awslogs-stream-prefix: api
+
+  worker:
+    image: ${ECR_REGISTRY}/claims-api:${IMAGE_TAG:-latest}
+    container_name: claims-worker-prod
+    env_file:
+      - ../config/prod.env
+    command: ["python", "-m", "src.workers.claim_processor"]
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /ecs/claims-worker
+        awslogs-region: us-east-1
+        awslogs-stream-prefix: worker

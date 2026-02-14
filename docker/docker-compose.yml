@@ -1,0 +1,33 @@
+# Docker Compose — Application Services (inside docker/ dir)
+# This is used by the root docker-compose.yml for building.
+
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: claims-api
+    env_file:
+      - ../config/dev.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../src:/app/src
+      - ../logs:/app/logs
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: claims-worker
+    env_file:
+      - ../config/dev.env
+    command: ["python", "-m", "src.workers.claim_processor"]
+    volumes:
+      - ../src:/app/src
+    restart: unless-stopped
+    depends_on:
+      - api

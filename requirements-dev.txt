@@ -1,0 +1,48 @@
+# Development dependencies (install with: pip install -r requirements-dev.txt)
+
+# Include production deps
+-r requirements.txt
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+pytest-xdist>=3.3.0
+moto[all]>=4.2.0
+locust>=2.20.0
+coverage>=7.3.0
+
+# Linting & Formatting
+black>=24.1.0
+flake8>=7.0.0
+flake8-docstrings>=1.7.0
+flake8-bugbear>=24.1.0
+isort>=5.13.0
+pylint>=3.0.0
+
+# Type Checking
+mypy>=1.8.0
+types-requests>=2.31.0
+types-python-dateutil>=2.8.0
+
+# Security
+bandit[toml]>=1.7.0
+safety>=2.3.0
+pip-audit>=2.6.0
+
+# Pre-commit
+pre-commit>=3.6.0
+
+# Documentation
+sphinx>=7.2.0
+sphinx-rtd-theme>=2.0.0
+sphinx-autodoc-typehints>=1.25.0
+
+# Debugging
+ipdb>=0.13.0
+ipython>=8.18.0
+
+# Profiling
+py-spy>=0.3.0
+memory-profiler>=0.61.0

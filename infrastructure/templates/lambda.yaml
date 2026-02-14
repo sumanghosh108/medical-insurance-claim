@@ -1,0 +1,224 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lambda functions, S3 buckets, DynamoDB tables, SNS, and Step Functions.
+
+Parameters:
+  Environment:
+    Type: String
+  ProjectName:
+    Type: String
+  VpcId:
+    Type: String
+  PrivateSubnetIds:
+    Type: CommaDelimitedList
+  RDSEndpoint:
+    Type: String
+  LambdaMemorySize:
+    Type: Number
+    Default: 512
+  LambdaTimeout:
+    Type: Number
+    Default: 300
+
+Resources:
+  # S3 Buckets
+  DocumentsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-documents-${Environment}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveOldDocuments
+            Status: Enabled
+            Transitions:
+              - StorageClass: INTELLIGENT_TIERING
+                TransitionInDays: 90
+
+  ModelsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-models-${Environment}"
+      VersioningConfiguration:
+        Status: Enabled
+
+  ResultsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-results-${Environment}"
+
+  # DynamoDB Tables
+  ClaimsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-metadata-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: claim_id
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+      KeySchema:
+        - AttributeName: claim_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: status-index
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  AuditTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-audit-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: event_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: event_id
+          KeyType: HASH
+
+  # SNS Topic
+  AlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${ProjectName}-alerts-${Environment}"
+
+  # Lambda Execution Role
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-lambda-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: ClaimsLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:ListBucket]
+                Resource:
+                  - !GetAtt DocumentsBucket.Arn
+                  - !Sub "${DocumentsBucket.Arn}/*"
+                  - !GetAtt ModelsBucket.Arn
+                  - !Sub "${ModelsBucket.Arn}/*"
+                  - !GetAtt ResultsBucket.Arn
+                  - !Sub "${ResultsBucket.Arn}/*"
+              - Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:Query]
+                Resource:
+                  - !GetAtt ClaimsTable.Arn
+                  - !GetAtt AuditTable.Arn
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref AlertsTopic
+              - Effect: Allow
+                Action: textract:*
+                Resource: "*"
+
+  # Lambda Functions
+  ClaimIngestionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-ingestion-${Environment}"
+      Runtime: python3.11
+      Handler: src.lambda_functions.claim_ingestion_handler.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: !Ref LambdaMemorySize
+      Timeout: !Ref LambdaTimeout
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue claims-LambdaSecurityGroupId
+        SubnetIds: !Ref PrivateSubnetIds
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          S3_BUCKET: !Ref DocumentsBucket
+          CLAIMS_TABLE: !Ref ClaimsTable
+          SNS_TOPIC: !Ref AlertsTopic
+          RDS_ENDPOINT: !Ref RDSEndpoint
+
+  DocumentExtractionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-extraction-${Environment}"
+      Runtime: python3.11
+      Handler: src.lambda_functions.document_extraction_orchestrator.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: 1024
+      Timeout: !Ref LambdaTimeout
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue claims-LambdaSecurityGroupId
+        SubnetIds: !Ref PrivateSubnetIds
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          S3_BUCKET: !Ref DocumentsBucket
+          RESULTS_BUCKET: !Ref ResultsBucket
+          CLAIMS_TABLE: !Ref ClaimsTable
+
+  FraudDetectionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-fraud-${Environment}"
+      Runtime: python3.11
+      Handler: src.lambda_functions.fraud_detection_inference.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: 2048
+      Timeout: !Ref LambdaTimeout
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue claims-LambdaSecurityGroupId
+        SubnetIds: !Ref PrivateSubnetIds
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          MODEL_BUCKET: !Ref ModelsBucket
+          RESULTS_BUCKET: !Ref ResultsBucket
+          CLAIMS_TABLE: !Ref ClaimsTable
+
+  WorkflowManagerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-workflow-${Environment}"
+      Runtime: python3.11
+      Handler: src.lambda_functions.workflow_state_manager.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: !Ref LambdaMemorySize
+      Timeout: !Ref LambdaTimeout
+      VpcConfig:
+        SecurityGroupIds:
+          - !ImportValue claims-LambdaSecurityGroupId
+        SubnetIds: !Ref PrivateSubnetIds
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          CLAIMS_TABLE: !Ref ClaimsTable
+          AUDIT_TABLE: !Ref AuditTable
+          SNS_TOPIC: !Ref AlertsTopic
+
+Outputs:
+  ApiUrl:
+    Value: !Sub "https://${ClaimIngestionFunction}.lambda-url.${AWS::Region}.on.aws"
+  DocumentsBucketName:
+    Value: !Ref DocumentsBucket
+  ClaimsTableName:
+    Value: !Ref ClaimsTable

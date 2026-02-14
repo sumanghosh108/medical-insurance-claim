@@ -152,7 +152,7 @@ class MigrationManager:
             session.close()
 
 
-class InitialSchemaM migration(Migration):
+class InitialSchemaMigration(Migration):
     """001: Create initial schema."""
     
     version = "001"

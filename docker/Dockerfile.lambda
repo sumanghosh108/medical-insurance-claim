@@ -1,0 +1,25 @@
+# Lambda Function Dockerfile
+# Build:  docker build -f docker/Dockerfile.lambda -t claims-lambda .
+# Used for deploying Lambda functions as container images.
+
+FROM public.ecr.aws/lambda/python:3.11
+
+# Install system dependencies for OCR
+RUN yum install -y \
+    tesseract \
+    poppler-utils \
+    && yum clean all
+
+# Copy requirements and install
+COPY requirements.txt ${LAMBDA_TASK_ROOT}/
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
+
+# Copy application code
+COPY src/ ${LAMBDA_TASK_ROOT}/src/
+COPY config/ ${LAMBDA_TASK_ROOT}/config/
+
+ENV PYTHONPATH=${LAMBDA_TASK_ROOT} \
+    ENVIRONMENT=production
+
+# Default handler (override per-function via CMD or env)
+CMD ["src.lambda_functions.claim_ingestion_handler.lambda_handler"]

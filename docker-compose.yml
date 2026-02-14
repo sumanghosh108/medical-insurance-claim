@@ -1,0 +1,82 @@
+# Docker Compose — Local Development
+# Usage: docker-compose up -d
+
+version: "3.9"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: claims-postgres
+    environment:
+      POSTGRES_DB: claims_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Admin}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/02_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # LocalStack (mock AWS services)
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: claims-localstack
+    environment:
+      SERVICES: s3,dynamodb,sns,sqs,stepfunctions,lambda,textract
+      DEFAULT_REGION: us-east-1
+      DEBUG: 0
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # Claims Processing API
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: claims-api
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-Admin}@postgres:5432/claims_db
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      S3_BUCKET: claims-documents
+      CLAIMS_TABLE: claims-metadata
+      LOG_LEVEL: DEBUG
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+    restart: unless-stopped
+
+  # pgAdmin (database management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: claims-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@claims.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  localstack_data:

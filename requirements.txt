@@ -37,6 +37,7 @@ pydantic
 
 # database
 psycopg2-binary
+psycopg2
 sqlalchemy
 
 # aws
