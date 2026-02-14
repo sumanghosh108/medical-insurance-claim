@@ -3,6 +3,7 @@ nodejs
 setuptools
 wheel
 dotenv
+opencv-python
 
 # core
 boto3
