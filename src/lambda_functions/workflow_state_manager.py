@@ -22,7 +22,7 @@ ses = boto3.client('ses')
 
 CLAIMS_TABLE = os.environ.get('CLAIMS_TABLE', 'claims')
 AUDIT_TABLE = os.environ.get('AUDIT_TABLE', 'claim_audit_log')
-SNS_TOPIC = os.environ.get('SNS_TOPIC', 'arn:aws:sns:us-east-1:123456789:claim-events')
+SNS_TOPIC = os.environ.get('SNS_TOPIC', 'arn:aws:sns:ap-south-1:123456789:claim-events')
 
 # Decision thresholds
 FRAUD_AUTO_REJECT_THRESHOLD = float(os.environ.get('FRAUD_AUTO_REJECT_THRESHOLD', '0.85'))

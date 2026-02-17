@@ -24,7 +24,7 @@ sns = boto3.client('sns')
 S3_BUCKET = os.environ.get('S3_BUCKET', 'claims-processing-documents')
 RESULTS_BUCKET = os.environ.get('RESULTS_BUCKET', 'claims-processing-results')
 CLAIMS_TABLE = os.environ.get('CLAIMS_TABLE', 'claims')
-SNS_TOPIC = os.environ.get('SNS_TOPIC', 'arn:aws:sns:us-east-1:123456789:claim-events')
+SNS_TOPIC = os.environ.get('SNS_TOPIC', 'arn:aws:sns:ap-south-1:123456789:claim-events')
 
 # Supported document types and their extractors
 PDF_EXTENSIONS = {'.pdf'}

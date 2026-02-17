@@ -32,7 +32,7 @@ class LogAlert:
 class LogAggregator:
     """Aggregate and send logs to CloudWatch."""
     
-    def __init__(self, log_group: str, region: str = "us-east-1"):
+    def __init__(self, log_group: str, region: str = "ap-south-1"):
         """
         Initialize log aggregator.
         

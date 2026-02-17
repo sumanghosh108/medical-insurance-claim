@@ -29,7 +29,7 @@ class MetricData:
 class CloudWatchMetrics:
     """CloudWatch metrics integration."""
     
-    def __init__(self, namespace: str, region: str = "us-east-1"):
+    def __init__(self, namespace: str, region: str = "ap-south-1"):
         """
         Initialize CloudWatch metrics.
         

@@ -18,6 +18,9 @@ Parameters:
   LambdaTimeout:
     Type: Number
     Default: 300
+  LambdaSecurityGroupId:
+    Type: String
+    Description: Security group ID for Lambda functions (from VPC stack)
 
 Resources:
   # S3 Buckets
@@ -139,13 +142,18 @@ Resources:
     Properties:
       FunctionName: !Sub "${ProjectName}-ingestion-${Environment}"
       Runtime: python3.11
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              print("Placeholder code. Deploy actual code via CLI.")
+              return {"statusCode": 200, "body": "Placeholder"}
       Handler: src.lambda_functions.claim_ingestion_handler.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       MemorySize: !Ref LambdaMemorySize
       Timeout: !Ref LambdaTimeout
       VpcConfig:
         SecurityGroupIds:
-          - !ImportValue claims-LambdaSecurityGroupId
+          - !Ref LambdaSecurityGroupId
         SubnetIds: !Ref PrivateSubnetIds
       Environment:
         Variables:
@@ -160,13 +168,18 @@ Resources:
     Properties:
       FunctionName: !Sub "${ProjectName}-extraction-${Environment}"
       Runtime: python3.11
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              print("Placeholder code. Deploy actual code via CLI.")
+              return {"statusCode": 200, "body": "Placeholder"}
       Handler: src.lambda_functions.document_extraction_orchestrator.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       MemorySize: 1024
       Timeout: !Ref LambdaTimeout
       VpcConfig:
         SecurityGroupIds:
-          - !ImportValue claims-LambdaSecurityGroupId
+          - !Ref LambdaSecurityGroupId
         SubnetIds: !Ref PrivateSubnetIds
       Environment:
         Variables:
@@ -180,13 +193,18 @@ Resources:
     Properties:
       FunctionName: !Sub "${ProjectName}-fraud-${Environment}"
       Runtime: python3.11
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              print("Placeholder code. Deploy actual code via CLI.")
+              return {"statusCode": 200, "body": "Placeholder"}
       Handler: src.lambda_functions.fraud_detection_inference.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       MemorySize: 2048
       Timeout: !Ref LambdaTimeout
       VpcConfig:
         SecurityGroupIds:
-          - !ImportValue claims-LambdaSecurityGroupId
+          - !Ref LambdaSecurityGroupId
         SubnetIds: !Ref PrivateSubnetIds
       Environment:
         Variables:
@@ -200,13 +218,18 @@ Resources:
     Properties:
       FunctionName: !Sub "${ProjectName}-workflow-${Environment}"
       Runtime: python3.11
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              print("Placeholder code. Deploy actual code via CLI.")
+              return {"statusCode": 200, "body": "Placeholder"}
       Handler: src.lambda_functions.workflow_state_manager.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       MemorySize: !Ref LambdaMemorySize
       Timeout: !Ref LambdaTimeout
       VpcConfig:
         SecurityGroupIds:
-          - !ImportValue claims-LambdaSecurityGroupId
+          - !Ref LambdaSecurityGroupId
         SubnetIds: !Ref PrivateSubnetIds
       Environment:
         Variables:
@@ -222,3 +245,5 @@ Outputs:
     Value: !Ref DocumentsBucket
   ClaimsTableName:
     Value: !Ref ClaimsTable
+  AlertsTopicArn:
+    Value: !Ref AlertsTopic

@@ -6,7 +6,7 @@ set -euo pipefail
 
 ENVIRONMENT="${1:-development}"
 PROJECT_NAME="claims-processing"
-REGION="${AWS_REGION:-us-east-1}"
+REGION="${AWS_REGION:-ap-south-1}"
 ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
 IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short HEAD)}"
 

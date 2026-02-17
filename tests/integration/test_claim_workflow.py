@@ -46,7 +46,7 @@ class TestClaimWorkflowPipeline:
         'S3_BUCKET': 'test-bucket',
         'RESULTS_BUCKET': 'test-results',
         'CLAIMS_TABLE': 'test-claims',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'FRAUD_SCORES_TABLE': 'test-fraud-scores',
         'MODEL_BUCKET': 'test-models',
         'MODEL_KEY': 'models/fraud/v2.1.0.joblib',
@@ -72,7 +72,7 @@ class TestClaimWorkflowPipeline:
         'S3_BUCKET': 'test-bucket',
         'RESULTS_BUCKET': 'test-results',
         'CLAIMS_TABLE': 'test-claims',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
     })
     def test_extraction_handler_processes_event(self, mock_aws):
         from src.lambda_functions.document_extraction_orchestrator import DocumentExtractionOrchestrator
@@ -87,7 +87,7 @@ class TestClaimWorkflowPipeline:
     @patch.dict(os.environ, {
         'RESULTS_BUCKET': 'test-results',
         'CLAIMS_TABLE': 'test-claims',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'MIN_VALIDATION_SCORE': '70.0',
     })
     def test_entity_extraction_processes_event(self, mock_aws):
@@ -103,7 +103,7 @@ class TestClaimWorkflowPipeline:
     @patch.dict(os.environ, {
         'CLAIMS_TABLE': 'test-claims',
         'AUDIT_TABLE': 'test-audit',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'FRAUD_AUTO_REJECT_THRESHOLD': '0.85',
         'FRAUD_MANUAL_REVIEW_THRESHOLD': '0.5',
         'MIN_VALIDATION_SCORE_FOR_AUTO': '70.0',
@@ -129,7 +129,7 @@ class TestWorkflowStateTransitions:
     @patch.dict(os.environ, {
         'CLAIMS_TABLE': 'test-claims',
         'AUDIT_TABLE': 'test-audit',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'FRAUD_AUTO_REJECT_THRESHOLD': '0.85',
         'FRAUD_MANUAL_REVIEW_THRESHOLD': '0.5',
         'MIN_VALIDATION_SCORE_FOR_AUTO': '70.0',
@@ -150,7 +150,7 @@ class TestWorkflowStateTransitions:
     @patch.dict(os.environ, {
         'CLAIMS_TABLE': 'test-claims',
         'AUDIT_TABLE': 'test-audit',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'FRAUD_AUTO_REJECT_THRESHOLD': '0.85',
         'FRAUD_MANUAL_REVIEW_THRESHOLD': '0.5',
         'MIN_VALIDATION_SCORE_FOR_AUTO': '70.0',

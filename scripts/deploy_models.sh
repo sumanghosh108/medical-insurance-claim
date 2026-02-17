@@ -7,7 +7,7 @@ set -euo pipefail
 ENVIRONMENT="${1:-development}"
 MODEL_VERSION="${2:-v2.1.0}"
 PROJECT_NAME="claims-processing"
-REGION="${AWS_REGION:-us-east-1}"
+REGION="${AWS_REGION:-ap-south-1}"
 MODEL_BUCKET="${PROJECT_NAME}-models-${ENVIRONMENT}"
 
 echo "=== Deploying ML Models: ${MODEL_VERSION} (${ENVIRONMENT}) ==="

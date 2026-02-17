@@ -80,7 +80,7 @@ class TextractExtractor(TextExtractor):
         super().__init__(config)
         self.textract_client = boto3.client(
             'textract',
-            region_name=self.config.get('aws_region', 'us-east-1')
+            region_name=self.config.get('aws_region', 'ap-south-1')
         )
         self.s3_client = boto3.client('s3')
         self.max_retries = self.config.get('max_retries', 3)

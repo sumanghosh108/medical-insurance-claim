@@ -15,10 +15,10 @@ sfn = boto3.client('stepfunctions')
 dynamodb = boto3.resource('dynamodb')
 sns = boto3.client('sns')
 
-STATE_MACHINE_ARN = "arn:aws:states:us-east-1:123456789:stateMachine:ClaimProcessor"
+STATE_MACHINE_ARN = "arn:aws:states:ap-south-1:123456789:stateMachine:ClaimProcessor"
 S3_BUCKET = "claims-processing-documents"
 CLAIMS_TABLE = "claims"
-SNS_TOPIC = "arn:aws:sns:us-east-1:123456789:claim-events"
+SNS_TOPIC = "arn:aws:sns:ap-south-1:123456789:claim-events"
 
 
 class ClaimIngestionHandler:

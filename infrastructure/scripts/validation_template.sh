@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-REGION="${AWS_REGION:-us-east-1}"
+REGION="${AWS_REGION:-ap-south-1}"
 TEMPLATE_DIR="$(dirname "$0")/../templates"
 ERRORS=0
 

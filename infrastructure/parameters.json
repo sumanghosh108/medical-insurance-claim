@@ -14,15 +14,15 @@
         },
         {
             "ParameterKey": "DBInstanceClass",
-            "ParameterValue": "db.t3.medium"
+            "ParameterValue": "db.t3.micro"
         },
         {
             "ParameterKey": "DBAllocatedStorage",
-            "ParameterValue": "50"
+            "ParameterValue": "20"
         },
         {
             "ParameterKey": "LambdaMemorySize",
-            "ParameterValue": "512"
+            "ParameterValue": "256"
         },
         {
             "ParameterKey": "LambdaTimeout",
@@ -30,7 +30,7 @@
         },
         {
             "ParameterKey": "SageMakerInstanceType",
-            "ParameterValue": "ml.c5.2xlarge"
+            "ParameterValue": "ml.t2.medium"
         },
         {
             "ParameterKey": "VpcCidr",
@@ -38,7 +38,7 @@
         },
         {
             "ParameterKey": "AlertEmail",
-            "ParameterValue": "alerts@claims.example.com"
+            "ParameterValue": "sum666504@gmail.com"
         }
     ]
 }

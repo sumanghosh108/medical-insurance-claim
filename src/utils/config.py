@@ -18,7 +18,7 @@ class Config:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     
     # AWS Configuration
-    AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+    AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
     AWS_PROFILE = os.getenv("AWS_PROFILE", "default")
     AWS_ACCOUNT_ID = os.getenv("AWS_ACCOUNT_ID", "123456789012")
     

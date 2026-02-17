@@ -18,7 +18,7 @@ class DashboardWidget:
     metrics: Optional[List[List[str]]] = None
     stat: str = "Average"
     period: int = 300
-    region: str = "us-east-1"
+    region: str = "ap-south-1"
     yAxis: Optional[Dict[str, Any]] = None
     annotations: Optional[Dict[str, Any]] = None
     properties: Optional[Dict[str, Any]] = None
@@ -153,7 +153,7 @@ class MetricDashboard:
 class DashboardBuilder:
     """Build and manage CloudWatch dashboards."""
     
-    def __init__(self, region: str = "us-east-1"):
+    def __init__(self, region: str = "ap-south-1"):
         """
         Initialize dashboard builder.
         

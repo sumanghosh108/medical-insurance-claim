@@ -6,7 +6,7 @@ set -euo pipefail
 
 ENVIRONMENT="${1:-development}"
 PROJECT_NAME="claims-processing"
-REGION="${AWS_REGION:-us-east-1}"
+REGION="${AWS_REGION:-ap-south-1}"
 
 echo "=== System Health Monitor: ${ENVIRONMENT} ==="
 echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"

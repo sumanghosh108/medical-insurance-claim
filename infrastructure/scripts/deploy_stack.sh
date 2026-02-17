@@ -9,7 +9,7 @@ PROJECT_NAME="claims-processing"
 STACK_NAME="${PROJECT_NAME}-${ENVIRONMENT}"
 TEMPLATE_FILE="../cloudformation.yaml"
 PARAMS_FILE="../parameters.json"
-REGION="${AWS_REGION:-us-east-1}"
+REGION="${AWS_REGION:-ap-south-1}"
 
 echo "=== Deploying ${STACK_NAME} to ${REGION} ==="
 

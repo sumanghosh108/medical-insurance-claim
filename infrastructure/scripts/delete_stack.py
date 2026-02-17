@@ -63,7 +63,7 @@ def delete_stack(stack_name: str, region: str, force: bool = False) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Delete a CloudFormation stack")
     parser.add_argument("stack_name", help="Name of the stack to delete")
-    parser.add_argument("--region", default="us-east-1", help="AWS region")
+    parser.add_argument("--region", default="ap-south-1", help="AWS region")
     parser.add_argument("--force", action="store_true", help="Force delete (skip confirmation)")
     args = parser.parse_args()
 

@@ -29,7 +29,7 @@ class TestTextractExtractor:
     @pytest.fixture
     def textract_extractor(self, mock_textract_client):
         """Create TextractExtractor instance with mocked client"""
-        extractor = TextractExtractor({'aws_region': 'us-east-1'})
+        extractor = TextractExtractor({'aws_region': 'ap-south-1'})
         extractor.textract_client = mock_textract_client
         return extractor
     

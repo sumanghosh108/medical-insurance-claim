@@ -6,7 +6,7 @@ set -euo pipefail
 
 ENVIRONMENT="${1:-development}"
 PROJECT_NAME="claims-processing"
-REGION="${AWS_REGION:-us-east-1}"
+REGION="${AWS_REGION:-ap-south-1}"
 
 echo "=== Deploying Lambda Functions: ${ENVIRONMENT} ==="
 

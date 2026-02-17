@@ -48,7 +48,7 @@ class MetricAlarm:
 class AlarmManager:
     """Manage CloudWatch alarms."""
     
-    def __init__(self, region: str = "us-east-1"):
+    def __init__(self, region: str = "ap-south-1"):
         """
         Initialize alarm manager.
         

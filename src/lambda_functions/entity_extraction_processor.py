@@ -22,7 +22,7 @@ sns = boto3.client('sns')
 
 RESULTS_BUCKET = os.environ.get('RESULTS_BUCKET', 'claims-processing-results')
 CLAIMS_TABLE = os.environ.get('CLAIMS_TABLE', 'claims')
-SNS_TOPIC = os.environ.get('SNS_TOPIC', 'arn:aws:sns:us-east-1:123456789:claim-events')
+SNS_TOPIC = os.environ.get('SNS_TOPIC', 'arn:aws:sns:ap-south-1:123456789:claim-events')
 
 # Minimum acceptable validation score to proceed automatically
 MIN_VALIDATION_SCORE = float(os.environ.get('MIN_VALIDATION_SCORE', '60.0'))

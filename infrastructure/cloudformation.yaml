@@ -11,6 +11,28 @@ Parameters:
   ProjectName:
     Type: String
     Default: claims-processing
+  VpcCidr:
+    Type: String
+    Default: "10.0.0.0/16"
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.micro
+  DBAllocatedStorage:
+    Type: Number
+    Default: 20
+  DBMasterPassword:
+    Type: String
+    NoEcho: true
+    Default: CHANGE_ME_IN_PRODUCTION
+  LambdaMemorySize:
+    Type: Number
+    Default: 256
+  LambdaTimeout:
+    Type: Number
+    Default: 300
+  AlertEmail:
+    Type: String
+    Default: sum666504@gmail.com
 
 Resources:
   VPCStack:
@@ -20,6 +42,7 @@ Resources:
       Parameters:
         Environment: !Ref Environment
         ProjectName: !Ref ProjectName
+        VpcCidr: !Ref VpcCidr
 
   RDSStack:
     Type: AWS::CloudFormation::Stack
@@ -31,6 +54,10 @@ Resources:
         ProjectName: !Ref ProjectName
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnetIds
+        RDSSecurityGroupId: !GetAtt VPCStack.Outputs.RDSSecurityGroupId
+        DBInstanceClass: !Ref DBInstanceClass
+        DBAllocatedStorage: !Ref DBAllocatedStorage
+        DBMasterPassword: !Ref DBMasterPassword
 
   LambdaStack:
     Type: AWS::CloudFormation::Stack
@@ -43,15 +70,20 @@ Resources:
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnetIds
         RDSEndpoint: !GetAtt RDSStack.Outputs.RDSEndpoint
+        LambdaSecurityGroupId: !GetAtt VPCStack.Outputs.LambdaSecurityGroupId
+        LambdaMemorySize: !Ref LambdaMemorySize
+        LambdaTimeout: !Ref LambdaTimeout
 
-  SageMakerStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn: VPCStack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/sagemaker.yaml"
-      Parameters:
-        Environment: !Ref Environment
-        ProjectName: !Ref ProjectName
+  # NOTE: SageMaker stack is disabled for free-tier deployments.
+  # Uncomment when you have a trained model and ECR image ready.
+  # SageMakerStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   DependsOn: VPCStack
+  #   Properties:
+  #     TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/sagemaker.yaml"
+  #     Parameters:
+  #       Environment: !Ref Environment
+  #       ProjectName: !Ref ProjectName
 
   MonitoringStack:
     Type: AWS::CloudFormation::Stack
@@ -61,6 +93,8 @@ Resources:
       Parameters:
         Environment: !Ref Environment
         ProjectName: !Ref ProjectName
+        AlertsTopicArn: !GetAtt LambdaStack.Outputs.AlertsTopicArn
+        AlertEmail: !Ref AlertEmail
 
 Outputs:
   VpcId:

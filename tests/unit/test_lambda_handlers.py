@@ -60,7 +60,7 @@ class TestDocumentExtractionOrchestrator:
         'S3_BUCKET': 'test-bucket',
         'RESULTS_BUCKET': 'test-results',
         'CLAIMS_TABLE': 'test-claims',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
     })
     @patch('boto3.client')
     @patch('boto3.resource')
@@ -72,7 +72,7 @@ class TestDocumentExtractionOrchestrator:
         'S3_BUCKET': 'test-bucket',
         'RESULTS_BUCKET': 'test-results',
         'CLAIMS_TABLE': 'test-claims',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
     })
     @patch('boto3.client')
     @patch('boto3.resource')
@@ -92,7 +92,7 @@ class TestEntityExtractionProcessor:
     @patch.dict(os.environ, {
         'RESULTS_BUCKET': 'test-results',
         'CLAIMS_TABLE': 'test-claims',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'MIN_VALIDATION_SCORE': '70.0',
     })
     @patch('boto3.client')
@@ -104,7 +104,7 @@ class TestEntityExtractionProcessor:
     @patch.dict(os.environ, {
         'RESULTS_BUCKET': 'test-results',
         'CLAIMS_TABLE': 'test-claims',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'MIN_VALIDATION_SCORE': '70.0',
     })
     @patch('boto3.client')
@@ -127,7 +127,7 @@ class TestFraudDetectionInference:
         'RESULTS_BUCKET': 'test-results',
         'CLAIMS_TABLE': 'test-claims',
         'FRAUD_SCORES_TABLE': 'test-fraud-scores',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'FRAUD_THRESHOLD_HIGH': '0.8',
         'FRAUD_THRESHOLD_MEDIUM': '0.5',
         'MODEL_VERSION': 'v2.1.0',
@@ -144,7 +144,7 @@ class TestFraudDetectionInference:
         'RESULTS_BUCKET': 'test-results',
         'CLAIMS_TABLE': 'test-claims',
         'FRAUD_SCORES_TABLE': 'test-fraud-scores',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'FRAUD_THRESHOLD_HIGH': '0.8',
         'FRAUD_THRESHOLD_MEDIUM': '0.5',
         'MODEL_VERSION': 'v2.1.0',
@@ -166,7 +166,7 @@ class TestWorkflowStateManager:
     @patch.dict(os.environ, {
         'CLAIMS_TABLE': 'test-claims',
         'AUDIT_TABLE': 'test-audit',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'FRAUD_AUTO_REJECT_THRESHOLD': '0.85',
         'FRAUD_MANUAL_REVIEW_THRESHOLD': '0.5',
         'MIN_VALIDATION_SCORE_FOR_AUTO': '70.0',
@@ -181,7 +181,7 @@ class TestWorkflowStateManager:
     @patch.dict(os.environ, {
         'CLAIMS_TABLE': 'test-claims',
         'AUDIT_TABLE': 'test-audit',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'FRAUD_AUTO_REJECT_THRESHOLD': '0.85',
         'FRAUD_MANUAL_REVIEW_THRESHOLD': '0.5',
         'MIN_VALIDATION_SCORE_FOR_AUTO': '70.0',
@@ -197,7 +197,7 @@ class TestWorkflowStateManager:
     @patch.dict(os.environ, {
         'CLAIMS_TABLE': 'test-claims',
         'AUDIT_TABLE': 'test-audit',
-        'SNS_TOPIC': 'arn:aws:sns:us-east-1:000000000000:test',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
         'FRAUD_AUTO_REJECT_THRESHOLD': '0.85',
         'FRAUD_MANUAL_REVIEW_THRESHOLD': '0.5',
         'MIN_VALIDATION_SCORE_FOR_AUTO': '70.0',

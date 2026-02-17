@@ -28,7 +28,7 @@ MODEL_KEY = os.environ.get('MODEL_KEY', 'models/fraud_detection/latest/model.job
 RESULTS_BUCKET = os.environ.get('RESULTS_BUCKET', 'claims-processing-results')
 CLAIMS_TABLE = os.environ.get('CLAIMS_TABLE', 'claims')
 FRAUD_SCORES_TABLE = os.environ.get('FRAUD_SCORES_TABLE', 'fraud_scores')
-SNS_TOPIC = os.environ.get('SNS_TOPIC', 'arn:aws:sns:us-east-1:123456789:claim-events')
+SNS_TOPIC = os.environ.get('SNS_TOPIC', 'arn:aws:sns:ap-south-1:123456789:claim-events')
 
 # Fraud thresholds
 FRAUD_THRESHOLD_HIGH = float(os.environ.get('FRAUD_THRESHOLD_HIGH', '0.75'))

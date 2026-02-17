@@ -30,7 +30,7 @@ services:
     container_name: claims-localstack
     environment:
       SERVICES: s3,dynamodb,sns,sqs,stepfunctions,lambda,textract
-      DEFAULT_REGION: us-east-1
+      DEFAULT_REGION: ap-south-1
       DEBUG: 0
     ports:
       - "4566:4566"
@@ -50,7 +50,7 @@ services:
       AWS_ENDPOINT_URL: http://localstack:4566
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
-      AWS_DEFAULT_REGION: us-east-1
+      AWS_DEFAULT_REGION: ap-south-1
       S3_BUCKET: claims-documents
       CLAIMS_TABLE: claims-metadata
       LOG_LEVEL: DEBUG
