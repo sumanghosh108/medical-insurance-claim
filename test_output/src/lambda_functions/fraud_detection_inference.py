@@ -61,7 +61,7 @@ class FraudDetectionInference:
             self.model = _cached_model
             return
 
-        from ml_models import FraudDetectionEnsemble
+        from src.ml_models import FraudDetectionEnsemble
 
         logger.info(f"Downloading model from s3://{MODEL_BUCKET}/{MODEL_KEY}")
 

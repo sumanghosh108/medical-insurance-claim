@@ -76,7 +76,7 @@ class DocumentExtractionOrchestrator:
         Uses Textract for PDFs/images and Tesseract for handwritten documents.
         Falls back to Tesseract if Textract fails.
         """
-        from document_processing import (
+        from src.document_processing import (
             TextractExtractor,
             TesseractExtractor,
         )

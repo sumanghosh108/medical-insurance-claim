@@ -162,6 +162,24 @@ Resources:
           SNS_TOPIC: !Ref AlertsTopic
           DB_TABLE: !Ref ClaimsTable
 
+
+  ClaimIngestionFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      TargetFunctionArn: !Ref ClaimIngestionFunction
+      AuthType: NONE
+      Cors:
+        AllowMethods: ["POST"]
+        AllowOrigins: ["*"]
+
+  ClaimIngestionFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ClaimIngestionFunction
+      Principal: "*"
+      Action: lambda:InvokeFunctionUrl
+      FunctionUrlAuthType: NONE
+
   DocumentExtractionFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -239,7 +257,7 @@ Resources:
 
 Outputs:
   ApiUrl:
-    Value: !Sub "https://${ClaimIngestionFunction}.lambda-url.${AWS::Region}.on.aws"
+    Value: !GetAtt ClaimIngestionFunctionUrl.FunctionUrl
   DocumentsBucketName:
     Value: !Ref DocumentsBucket
   ClaimsTableName:

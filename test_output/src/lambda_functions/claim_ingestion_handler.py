@@ -7,7 +7,6 @@ import logging
 import os
 from datetime import datetime
 from typing import Dict, Any, Tuple, Optional
-from decimal import Decimal
 import boto3
 
 logger = logging.getLogger(__name__)
@@ -88,7 +87,7 @@ class ClaimIngestionHandler:
             'claim_id': claim_id,
             'patient_id': data['patient_id'],
             'hospital_id': data['hospital_id'],
-            'claim_amount': Decimal(str(data['claim_amount'])),
+            'claim_amount': float(data['claim_amount']),
             'treatment_type': data['treatment_type'],
             'diagnosis_code': data['diagnosis_code'],
             'claim_date': data['claim_date'],

@@ -1,0 +1,102 @@
+"""Constants Module - Application Constants."""
+
+# Claim Amounts
+MIN_CLAIM_AMOUNT = 1.0
+MAX_CLAIM_AMOUNT = 1_000_000.0
+
+# Fraud Detection Thresholds
+FRAUD_THRESHOLD_DEFAULT = 0.5
+FRAUD_THRESHOLD_STRICT = 0.75
+FRAUD_THRESHOLD_LENIENT = 0.3
+
+# Confidence Levels
+CONFIDENCE_HIGH = 0.8
+CONFIDENCE_MEDIUM = 0.5
+CONFIDENCE_LOW = 0.3
+
+# Processing Status
+STATUS_PENDING = "PENDING"
+STATUS_PROCESSING = "PROCESSING"
+STATUS_APPROVED = "APPROVED"
+STATUS_REJECTED = "REJECTED"
+STATUS_MANUAL_REVIEW = "MANUAL_REVIEW"
+STATUS_ERROR = "ERROR"
+
+PROCESSING_STATUSES = {
+    STATUS_PENDING,
+    STATUS_PROCESSING,
+    STATUS_APPROVED,
+    STATUS_REJECTED,
+    STATUS_MANUAL_REVIEW,
+    STATUS_ERROR,
+}
+
+# Claim Types
+CLAIM_TYPE_SURGERY = "Surgery"
+CLAIM_TYPE_CONSULTATION = "Consultation"
+CLAIM_TYPE_ER = "ER"
+CLAIM_TYPE_DIAGNOSTIC = "Diagnostic"
+CLAIM_TYPE_MEDICATION = "Medication"
+CLAIM_TYPE_OTHER = "Other"
+
+CLAIM_TYPES = {
+    CLAIM_TYPE_SURGERY,
+    CLAIM_TYPE_CONSULTATION,
+    CLAIM_TYPE_ER,
+    CLAIM_TYPE_DIAGNOSTIC,
+    CLAIM_TYPE_MEDICATION,
+    CLAIM_TYPE_OTHER,
+}
+
+# Document Types
+DOC_TYPE_PDF = "pdf"
+DOC_TYPE_IMAGE = "jpg"
+DOC_TYPE_PNG = "png"
+
+DOCUMENT_TYPES = {DOC_TYPE_PDF, DOC_TYPE_IMAGE, DOC_TYPE_PNG}
+
+# Time Related
+HOURS_PER_DAY = 24
+DAYS_PER_YEAR = 365
+CLAIM_RETENTION_DAYS = 90
+EVENT_RETENTION_DAYS = 365
+
+# Model Related
+MODEL_VERSION = "1.0.0"
+FEATURE_ENGINEER_VERSION = "1.0.0"
+
+# Feature Names
+FEATURE_CLAIM_AMOUNT = "claim_amount"
+FEATURE_CLAIM_AMOUNT_LOG = "claim_amount_log"
+FEATURE_CLAIM_AMOUNT_ZSCORE = "claim_amount_zscore"
+FEATURE_DAY_OF_WEEK = "day_of_week"
+FEATURE_MONTH = "month"
+FEATURE_HOUR = "hour"
+
+# HTTP Status Codes
+HTTP_OK = 200
+HTTP_CREATED = 201
+HTTP_ACCEPTED = 202
+HTTP_BAD_REQUEST = 400
+HTTP_UNAUTHORIZED = 401
+HTTP_FORBIDDEN = 403
+HTTP_NOT_FOUND = 404
+HTTP_CONFLICT = 409
+HTTP_INTERNAL_ERROR = 500
+HTTP_SERVICE_UNAVAILABLE = 503
+
+# Error Messages
+ERROR_MISSING_FIELD = "Missing required field: {field}"
+ERROR_INVALID_AMOUNT = "Claim amount must be between {min} and {max}"
+ERROR_INVALID_DATE = "Invalid date format. Use ISO 8601"
+ERROR_INVALID_UUID = "Invalid UUID format"
+ERROR_MODEL_NOT_TRAINED = "Model not trained. Call train() first"
+ERROR_INVALID_ENVIRONMENT = "Unknown environment: {env}"
+ERROR_DATABASE_CONNECTION = "Failed to connect to database"
+ERROR_S3_UPLOAD = "Failed to upload to S3"
+ERROR_WORKFLOW_TRIGGER = "Failed to trigger workflow"
+
+# Success Messages
+SUCCESS_CLAIM_RECEIVED = "Claim {claim_id} received and processing started"
+SUCCESS_MODEL_TRAINED = "Model trained on {samples} samples"
+SUCCESS_PREDICTION_COMPLETE = "Fraud prediction complete"

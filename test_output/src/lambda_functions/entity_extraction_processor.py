@@ -55,7 +55,7 @@ class EntityExtractionProcessor:
         Returns:
             Dictionary with entities, structured_data, confidence, etc.
         """
-        from document_processing import extract_claim_entities
+        from src.document_processing import extract_claim_entities
 
         result = extract_claim_entities(
             text=text,
@@ -89,7 +89,7 @@ class EntityExtractionProcessor:
         Returns:
             Dictionary with validation result details.
         """
-        from document_processing import DocumentValidator
+        from src.document_processing import DocumentValidator
 
         validator = DocumentValidator()
         result = validator.validate(

@@ -1,47 +1,84 @@
+import json
 import uuid
 import random
-import psycopg2
+import base64
+import argparse
+import time
+import boto3
 from datetime import datetime, timedelta
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# Default function name based on project conventions
+DEFAULT_FUNCTION_NAME = "claims-processing-ingestion-development"
 
-# Database connection
-conn=psycopg2.connect(
-    host=os.getenv('DB_HOST','DB_HOST'),
-    user=os.getenv('DB_USER','DB_USER'),
-    password=os.getenv('DB_PASSWORD','DB_PASSWORD'),
-    database=os.getenv('DB_NAME','DB_NAME'),
-    port=os.getenv('DB_PORT','DB_PORT')
-)
-
-cursor=conn.cursor()
-
-# Generate 100 test claims
-print("Generating test clims...")
-for i in range(100):
-    claim_id = str(uuid.uuid4())
-    patient_id = str(uuid.uuid4())
-    hospital_id = str(uuid.uuid4())
-    claim_amount = random.uniform(1000, 50000)
-    treatment_type = random.choice(['Surgery', 'Consultation', 'ER', 'Lab Work'])
-    diagnosis_code = f'ICD10-{random.randint(1, 999):03d}'
-    claim_date = datetime.now() - timedelta(days=random.randint(0, 30))
+def generate_claim(function_name):
+    timestamp_now = datetime.utcnow()
     
-    cursor.execute("""
-        INSERT INTO claims (
-            claim_id, patient_id, hospital_id, claim_amount,
-            treatment_type, diagnosis_code, claim_date,
-            fraud_score, approval_status
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (
-        claim_id, patient_id, hospital_id, claim_amount,
-        treatment_type, diagnosis_code, claim_date,
-        random.random(), 'pending'
-    ))
+    # Generate random claim data
+    claim_data = {
+        "patient_id": str(uuid.uuid4()),
+        "hospital_id": str(uuid.uuid4()),
+        "claim_amount": round(random.uniform(500.0, 50000.0), 2),
+        "treatment_type": random.choice(["Surgery", "Consultation", "Emergency", "Lab Work", "Pharmacy"]),
+        "diagnosis_code": f"ICD10-{random.choice(['A', 'B', 'C', 'D'])}{random.randint(10, 99)}",
+        "claim_date": (timestamp_now - timedelta(days=random.randint(0, 30))).isoformat(),
+        # Simple dummy text document encoded as base64
+        "document": base64.b64encode(f"Medical Claim Document\nDate: {timestamp_now}\nType: Test".encode('utf-8')).decode('utf-8'),
+        "document_type": "txt"
+    }
 
-conn.commit()
-cursor.close()
-conn.close()
-print("Generated 100 test claims")
+    # Wrap in API Gateway proxy structure (body field) as expected by handler
+    payload = {
+        "body": json.dumps(claim_data)
+    }
+
+    print(f"Invoking {function_name}...")
+    
+    try:
+        client = boto3.client('lambda', region_name='ap-south-1')
+        response = client.invoke(
+            FunctionName=function_name,
+            InvocationType='RequestResponse',
+            Payload=json.dumps(payload)
+        )
+        
+        payload_stream = response['Payload']
+
+        if 'FunctionError' in response:
+            print(f"[AWS Error] Function Execution Failed: {response['FunctionError']}")
+            error_details = json.loads(payload_stream.read().decode('utf-8'))
+            print(f"Error Details: {error_details}")
+            return
+        
+        status_code = response['StatusCode']
+        response_payload = json.loads(payload_stream.read().decode('utf-8'))
+        
+        if status_code == 200:
+            # Check the application-level status code in the response body
+            app_status = response_payload.get('statusCode', 200)
+            if app_status in [200, 202]:
+                print(f"[Success] Claim submitted. Lambda Response: {response_payload.get('body')}")
+            else:
+                print(f"[Application Error: {app_status}] {response_payload.get('body')}")
+        else:
+            print(f"[AWS Error: {status_code}] {response}")
+
+    except Exception as e:
+        print(f"[Exception] {str(e)}")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate synthetic claims via direct Lambda invocation")
+    parser.add_argument("--function", default=DEFAULT_FUNCTION_NAME, help="Lambda Function Name")
+    parser.add_argument("--count", type=int, default=5, help="Number of claims to generate")
+    parser.add_argument("--delay", type=float, default=0.5, help="Delay between requests in seconds")
+    
+    args = parser.parse_args()
+
+    print(f"Generating {args.count} synthetic claims for: {args.function}")
+    print("-" * 60)
+    
+    for i in range(args.count):
+        generate_claim(args.function)
+        time.sleep(args.delay)
+    
+    print("-" * 60)
+    print("Data generation complete.")
