@@ -10,8 +10,7 @@ Parameters:
     Type: String
   PrivateSubnetIds:
     Type: CommaDelimitedList
-  RDSEndpoint:
-    Type: String
+
   LambdaMemorySize:
     Type: Number
     Default: 512
@@ -161,7 +160,7 @@ Resources:
           S3_BUCKET: !Ref DocumentsBucket
           CLAIMS_TABLE: !Ref ClaimsTable
           SNS_TOPIC: !Ref AlertsTopic
-          RDS_ENDPOINT: !Ref RDSEndpoint
+          DB_TABLE: !Ref ClaimsTable
 
   DocumentExtractionFunction:
     Type: AWS::Lambda::Function

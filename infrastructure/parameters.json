@@ -9,28 +9,12 @@
             "ParameterValue": "claims-processing"
         },
         {
-            "ParameterKey": "DBMasterPassword",
-            "ParameterValue": "CHANGE_ME_IN_PRODUCTION"
-        },
-        {
-            "ParameterKey": "DBInstanceClass",
-            "ParameterValue": "db.t3.micro"
-        },
-        {
-            "ParameterKey": "DBAllocatedStorage",
-            "ParameterValue": "20"
-        },
-        {
             "ParameterKey": "LambdaMemorySize",
             "ParameterValue": "256"
         },
         {
             "ParameterKey": "LambdaTimeout",
             "ParameterValue": "300"
-        },
-        {
-            "ParameterKey": "SageMakerInstanceType",
-            "ParameterValue": "ml.t2.medium"
         },
         {
             "ParameterKey": "VpcCidr",

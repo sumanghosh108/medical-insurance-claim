@@ -1,7 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   Insurance Claims Processing Pipeline — Master Stack.
-  Deploys VPC, RDS, Lambda, SageMaker, and monitoring via nested stacks.
+  Deploys VPC, Lambda, and monitoring via nested stacks.
+  RDS and SageMaker disabled for free-tier accounts.
 
 Parameters:
   Environment:
@@ -14,16 +15,6 @@ Parameters:
   VpcCidr:
     Type: String
     Default: "10.0.0.0/16"
-  DBInstanceClass:
-    Type: String
-    Default: db.t3.micro
-  DBAllocatedStorage:
-    Type: Number
-    Default: 20
-  DBMasterPassword:
-    Type: String
-    NoEcho: true
-    Default: CHANGE_ME_IN_PRODUCTION
   LambdaMemorySize:
     Type: Number
     Default: 256
@@ -44,24 +35,21 @@ Resources:
         ProjectName: !Ref ProjectName
         VpcCidr: !Ref VpcCidr
 
-  RDSStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn: VPCStack
-    Properties:
-      TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/rds.yaml"
-      Parameters:
-        Environment: !Ref Environment
-        ProjectName: !Ref ProjectName
-        VpcId: !GetAtt VPCStack.Outputs.VpcId
-        PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnetIds
-        RDSSecurityGroupId: !GetAtt VPCStack.Outputs.RDSSecurityGroupId
-        DBInstanceClass: !Ref DBInstanceClass
-        DBAllocatedStorage: !Ref DBAllocatedStorage
-        DBMasterPassword: !Ref DBMasterPassword
+  # NOTE: RDS stack disabled — free-tier account blocks RDS creation.
+  # Uncomment when your account is upgraded.
+  # RDSStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   DependsOn: VPCStack
+  #   Properties:
+  #     TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/rds.yaml"
+  #     Parameters:
+  #       Environment: !Ref Environment
+  #       ProjectName: !Ref ProjectName
+  #       ...
 
   LambdaStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [VPCStack, RDSStack]
+    DependsOn: VPCStack
     Properties:
       TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/lambda.yaml"
       Parameters:
@@ -69,25 +57,18 @@ Resources:
         ProjectName: !Ref ProjectName
         VpcId: !GetAtt VPCStack.Outputs.VpcId
         PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnetIds
-        RDSEndpoint: !GetAtt RDSStack.Outputs.RDSEndpoint
         LambdaSecurityGroupId: !GetAtt VPCStack.Outputs.LambdaSecurityGroupId
         LambdaMemorySize: !Ref LambdaMemorySize
         LambdaTimeout: !Ref LambdaTimeout
 
-  # NOTE: SageMaker stack is disabled for free-tier deployments.
-  # Uncomment when you have a trained model and ECR image ready.
+  # NOTE: SageMaker stack disabled for free-tier deployments.
   # SageMakerStack:
   #   Type: AWS::CloudFormation::Stack
-  #   DependsOn: VPCStack
-  #   Properties:
-  #     TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/sagemaker.yaml"
-  #     Parameters:
-  #       Environment: !Ref Environment
-  #       ProjectName: !Ref ProjectName
+  #   ...
 
   MonitoringStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: [LambdaStack, RDSStack]
+    DependsOn: LambdaStack
     Properties:
       TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/monitoring.yaml"
       Parameters:
@@ -99,7 +80,9 @@ Resources:
 Outputs:
   VpcId:
     Value: !GetAtt VPCStack.Outputs.VpcId
-  RDSEndpoint:
-    Value: !GetAtt RDSStack.Outputs.RDSEndpoint
   ApiUrl:
     Value: !GetAtt LambdaStack.Outputs.ApiUrl
+  DocumentsBucket:
+    Value: !GetAtt LambdaStack.Outputs.DocumentsBucketName
+  ClaimsTable:
+    Value: !GetAtt LambdaStack.Outputs.ClaimsTableName
