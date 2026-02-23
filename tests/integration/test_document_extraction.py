@@ -56,30 +56,40 @@ class TestExtractionPipeline:
         """Test that extracted entities can be validated."""
         validator = DocumentValidator()
         entity_data = {
-            'patient_name': 'John Doe',
-            'diagnosis_code': 'K35.80',
-            'procedure_code': '44970',
-            'claim_amount': 12500.00,
-            'service_date': '2025-01-15',
-            'provider_name': 'Test General Hospital',
-            'provider_npi': '9999999901',
+            'claim_info': {
+                'claim_number': 'CLM-2025-002',
+            },
+            'policy_info': {
+                'policy_number': 'POL-9999999901',
+            },
+            'personal_info': {
+                'name': 'John Doe',
+            },
+            'dates': ['2025-01-15'],
+            'medical_info': {
+                'provider': 'Test General Hospital',
+                'diagnosis_codes': ['K35.80'],
+                'procedure_codes': ['44970'],
+            },
+            'amounts': [12500.00],
         }
         result = validator.validate(entity_data, claim_type='health')
         assert isinstance(result, ValidationResult)
-        assert result.score >= 0
+        assert result.validation_score >= 0
 
     def test_extraction_result_structure(self):
         """Test ExtractionResult has correct structure."""
         result = ExtractionResult(
             text='Sample text',
             confidence=0.95,
-            document_type=DocumentType.PDF,
-            pages=1,
             metadata={'source': 'test'},
+            pages=1,
+            processing_time=0.1,
+            extractor_type='test',
         )
         assert result.text == 'Sample text'
         assert result.confidence == 0.95
-        assert result.document_type == DocumentType.PDF
+        assert result.extractor_type == 'test'
 
 
 @pytest.mark.integration
@@ -106,41 +116,69 @@ class TestValidationIntegration:
 
     def test_complete_claim_passes_validation(self, validator):
         data = {
-            'patient_name': 'Jane Smith',
-            'date_of_birth': '1990-03-20',
-            'diagnosis_code': 'J18.9',
-            'procedure_code': '99213',
-            'claim_amount': 350.00,
-            'service_date': '2025-01-10',
-            'provider_name': 'City Medical Center',
-            'provider_npi': '1234567890',
+            'claim_info': {
+                'claim_number': 'CLM-2025-001',
+            },
+            'policy_info': {
+                'policy_number': 'POL-1234567890',
+            },
+            'personal_info': {
+                'name': 'Jane Smith',
+                'date_of_birth': '1990-03-20',
+            },
+            'dates': ['2025-01-10'],
+            'medical_info': {
+                'provider': 'City Medical Center',
+                'diagnosis_codes': ['J18.9'],
+                'procedure_codes': ['99213'],
+            },
+            'amounts': [350.00],
         }
         result = validator.validate(data, claim_type='health')
-        assert result.score > 50
+        assert result.validation_score > 50
 
     def test_incomplete_claim_gets_lower_score(self, validator):
-        data = {'claim_amount': 100.00}
+        data = {'amounts': [100.00]}
         result = validator.validate(data, claim_type='health')
         complete_data = {
-            'patient_name': 'Jane Smith',
-            'diagnosis_code': 'J18.9',
-            'claim_amount': 100.00,
-            'service_date': '2025-01-10',
-            'provider_name': 'Hospital',
-            'provider_npi': '1234567890',
+            'claim_info': {
+                'claim_number': 'CLM-2025-003',
+            },
+            'policy_info': {
+                'policy_number': 'POL-1234567890',
+            },
+            'personal_info': {
+                'name': 'Jane Smith',
+            },
+            'dates': ['2025-01-10'],
+            'medical_info': {
+                'provider': 'Hospital',
+                'diagnosis_codes': ['J18.9'],
+                'procedure_codes': ['99213'],
+            },
+            'amounts': [100.00],
         }
         complete_result = validator.validate(complete_data, claim_type='health')
-        assert result.score <= complete_result.score
+        assert result.validation_score <= complete_result.validation_score
 
     def test_high_amount_claim_validation(self, validator):
         data = {
-            'patient_name': 'Test Patient',
-            'diagnosis_code': 'I25.10',
-            'procedure_code': '33533',
-            'claim_amount': 150000.00,
-            'service_date': '2025-01-10',
-            'provider_name': 'Test Hospital',
-            'provider_npi': '1234567890',
+            'claim_info': {
+                'claim_number': 'CLM-2025-004',
+            },
+            'policy_info': {
+                'policy_number': 'POL-1234567890',
+            },
+            'personal_info': {
+                'name': 'Test Patient',
+            },
+            'dates': ['2025-01-10'],
+            'medical_info': {
+                'provider': 'Test Hospital',
+                'diagnosis_codes': ['I25.10'],
+                'procedure_codes': ['33533'],
+            },
+            'amounts': [150000.00],
         }
         result = validator.validate(data, claim_type='health')
         assert isinstance(result, ValidationResult)

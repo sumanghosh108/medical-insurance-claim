@@ -83,6 +83,7 @@ class FraudDetectionEnsemble:
         
         self.scaler = StandardScaler()
         X_scaled = self.scaler.fit_transform(X_train)
+        self.feature_names = list(X_train.columns)
         
         self.rf_model = RandomForestClassifier(
             n_estimators=200, max_depth=20,
