@@ -46,6 +46,19 @@ staging:
     pool_size: 10
     max_overflow: 20
 
+  # RDS Proxy & Read Replica settings
+  proxy:
+    enabled: true
+    endpoint: ${RDS_PROXY_ENDPOINT}
+  read_replica:
+    enabled: false
+    endpoint: ""
+  lambda:
+    pool_size: 1
+    max_overflow: 2
+    pool_recycle: 300
+    pool_pre_ping: true
+
 production:
   host: ${RDS_ENDPOINT}
   port: 5432
@@ -65,7 +78,25 @@ production:
     statement_timeout: 30000  # 30 seconds
     lock_timeout: 10000       # 10 seconds
 
+  # RDS Proxy & Read Replica settings (production)
+  proxy:
+    enabled: true
+    endpoint: ${RDS_PROXY_ENDPOINT}
+    max_connections_percent: 90
+    max_idle_connections_percent: 50
+    connection_borrow_timeout: 120
+  read_replica:
+    enabled: true
+    endpoint: ${RDS_READ_ENDPOINT}
+  lambda:
+    pool_size: 1
+    max_overflow: 2
+    pool_recycle: 300
+    pool_timeout: 10
+    pool_pre_ping: true
+
 migrations:
   directory: database/migrations
   table: schema_migrations
   auto_apply: false
+

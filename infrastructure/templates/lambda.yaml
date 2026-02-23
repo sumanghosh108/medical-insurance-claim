@@ -21,6 +21,23 @@ Parameters:
     Type: String
     Description: Security group ID for Lambda functions (from VPC stack)
 
+  # RDS Proxy and Read Replica endpoints
+  RDSProxyEndpoint:
+    Type: String
+    Default: ""
+    Description: RDS Proxy endpoint for write connections
+  RDSReadEndpoint:
+    Type: String
+    Default: ""
+    Description: Read Replica endpoint for read-heavy queries
+  DBName:
+    Type: String
+    Default: claims_db
+  DBMasterPassword:
+    Type: String
+    NoEcho: true
+    Default: "change_me_in_production"
+
 Resources:
   # S3 Buckets
   DocumentsBucket:
@@ -134,6 +151,9 @@ Resources:
               - Effect: Allow
                 Action: textract:*
                 Resource: "*"
+              - Effect: Allow
+                Action: [states:StartExecution, states:ListExecutions]
+                Resource: "*"
 
   # Lambda Functions
   ClaimIngestionFunction:
@@ -146,7 +166,7 @@ Resources:
           def lambda_handler(event, context):
               print("Placeholder code. Deploy actual code via CLI.")
               return {"statusCode": 200, "body": "Placeholder"}
-      Handler: src.lambda_functions.claim_ingestion_handler.lambda_handler
+      Handler: lambda_functions.claim_ingestion_handler.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       MemorySize: !Ref LambdaMemorySize
       Timeout: !Ref LambdaTimeout
@@ -161,6 +181,9 @@ Resources:
           CLAIMS_TABLE: !Ref ClaimsTable
           SNS_TOPIC: !Ref AlertsTopic
           DB_TABLE: !Ref ClaimsTable
+          DATABASE_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSProxyEndpoint}:5432/${DBName}"
+          DATABASE_READ_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSReadEndpoint}:5432/${DBName}"
+          DB_USE_PROXY: "true"
 
 
   ClaimIngestionFunctionUrl:
@@ -190,7 +213,7 @@ Resources:
           def lambda_handler(event, context):
               print("Placeholder code. Deploy actual code via CLI.")
               return {"statusCode": 200, "body": "Placeholder"}
-      Handler: src.lambda_functions.document_extraction_orchestrator.lambda_handler
+      Handler: lambda_functions.document_extraction_orchestrator.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       MemorySize: 1024
       Timeout: !Ref LambdaTimeout
@@ -204,6 +227,37 @@ Resources:
           S3_BUCKET: !Ref DocumentsBucket
           RESULTS_BUCKET: !Ref ResultsBucket
           CLAIMS_TABLE: !Ref ClaimsTable
+          DATABASE_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSProxyEndpoint}:5432/${DBName}"
+          DATABASE_READ_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSReadEndpoint}:5432/${DBName}"
+          DB_USE_PROXY: "true"
+
+  EntityExtractionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-entity-extraction-${Environment}"
+      Runtime: python3.11
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              print("Placeholder code. Deploy actual code via CLI.")
+              return {"statusCode": 200, "body": "Placeholder"}
+      Handler: src.lambda_functions.entity_extraction_processor.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: 1024
+      Timeout: !Ref LambdaTimeout
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroupId
+        SubnetIds: !Ref PrivateSubnetIds
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          RESULTS_BUCKET: !Ref ResultsBucket
+          CLAIMS_TABLE: !Ref ClaimsTable
+          SNS_TOPIC: !Ref AlertsTopic
+          DATABASE_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSProxyEndpoint}:5432/${DBName}"
+          DATABASE_READ_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSReadEndpoint}:5432/${DBName}"
+          DB_USE_PROXY: "true"
 
   FraudDetectionFunction:
     Type: AWS::Lambda::Function
@@ -215,7 +269,7 @@ Resources:
           def lambda_handler(event, context):
               print("Placeholder code. Deploy actual code via CLI.")
               return {"statusCode": 200, "body": "Placeholder"}
-      Handler: src.lambda_functions.fraud_detection_inference.lambda_handler
+      Handler: lambda_functions.fraud_detection_inference.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       MemorySize: 2048
       Timeout: !Ref LambdaTimeout
@@ -229,6 +283,9 @@ Resources:
           MODEL_BUCKET: !Ref ModelsBucket
           RESULTS_BUCKET: !Ref ResultsBucket
           CLAIMS_TABLE: !Ref ClaimsTable
+          DATABASE_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSProxyEndpoint}:5432/${DBName}"
+          DATABASE_READ_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSReadEndpoint}:5432/${DBName}"
+          DB_USE_PROXY: "true"
 
   WorkflowManagerFunction:
     Type: AWS::Lambda::Function
@@ -240,7 +297,7 @@ Resources:
           def lambda_handler(event, context):
               print("Placeholder code. Deploy actual code via CLI.")
               return {"statusCode": 200, "body": "Placeholder"}
-      Handler: src.lambda_functions.workflow_state_manager.lambda_handler
+      Handler: lambda_functions.workflow_state_manager.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       MemorySize: !Ref LambdaMemorySize
       Timeout: !Ref LambdaTimeout
@@ -254,6 +311,9 @@ Resources:
           CLAIMS_TABLE: !Ref ClaimsTable
           AUDIT_TABLE: !Ref AuditTable
           SNS_TOPIC: !Ref AlertsTopic
+          DATABASE_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSProxyEndpoint}:5432/${DBName}"
+          DATABASE_READ_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSReadEndpoint}:5432/${DBName}"
+          DB_USE_PROXY: "true"
 
 Outputs:
   ApiUrl:
@@ -264,3 +324,13 @@ Outputs:
     Value: !Ref ClaimsTable
   AlertsTopicArn:
     Value: !Ref AlertsTopic
+  ClaimIngestionFunctionArn:
+    Value: !GetAtt ClaimIngestionFunction.Arn
+  DocumentExtractionFunctionArn:
+    Value: !GetAtt DocumentExtractionFunction.Arn
+  EntityExtractionFunctionArn:
+    Value: !GetAtt EntityExtractionFunction.Arn
+  FraudDetectionFunctionArn:
+    Value: !GetAtt FraudDetectionFunction.Arn
+  WorkflowManagerFunctionArn:
+    Value: !GetAtt WorkflowManagerFunction.Arn

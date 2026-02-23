@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: RDS PostgreSQL instance for insurance claims data.
+Description: >
+  RDS PostgreSQL with RDS Proxy (Lambda connection multiplexing)
+  and Read Replica for horizontal read scaling.
 
 Parameters:
   Environment:
@@ -23,8 +25,39 @@ Parameters:
   RDSSecurityGroupId:
     Type: String
     Description: Security group ID for RDS (from VPC stack)
+  LambdaSecurityGroupId:
+    Type: String
+    Description: Security group ID for Lambda functions (from VPC stack)
+
+Conditions:
+  IsProd: !Equals [!Ref Environment, production]
+  EnableReadReplica: !Equals [!Ref Environment, production]
 
 Resources:
+  # ---------------------------------------------------------------
+  # Secrets Manager — stores DB credentials for RDS Proxy
+  # ---------------------------------------------------------------
+  DBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "${ProjectName}-db-credentials-${Environment}"
+      Description: RDS master credentials used by RDS Proxy
+      SecretString: !Sub |
+        {
+          "username": "postgres",
+          "password": "${DBMasterPassword}",
+          "engine": "postgres",
+          "host": "${RDSInstance.Endpoint.Address}",
+          "port": 5432,
+          "dbname": "claims_db"
+        }
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ---------------------------------------------------------------
+  # Primary RDS Instance
+  # ---------------------------------------------------------------
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -39,7 +72,8 @@ Resources:
       EngineVersion: "15.13"
       DBInstanceClass: !Ref DBInstanceClass
       AllocatedStorage: !Ref DBAllocatedStorage
-      StorageType: gp2
+      MaxAllocatedStorage: !If [IsProd, 500, 100]
+      StorageType: gp3
       MasterUsername: postgres
       MasterUserPassword: !Ref DBMasterPassword
       DBName: claims_db
@@ -51,15 +85,143 @@ Resources:
       PreferredBackupWindow: "03:00-04:00"
       PreferredMaintenanceWindow: "sun:04:00-sun:05:00"
       DeletionProtection: !If [IsProd, true, false]
+      StorageEncrypted: true
+      EnablePerformanceInsights: !If [IsProd, true, false]
+      MonitoringInterval: !If [IsProd, 60, 0]
+      MonitoringRoleArn: !If [IsProd, !GetAtt RDSMonitoringRole.Arn, !Ref "AWS::NoValue"]
       Tags:
         - Key: Environment
           Value: !Ref Environment
 
-Conditions:
-  IsProd: !Equals [!Ref Environment, production]
+  # ---------------------------------------------------------------
+  # Read Replica (production only)
+  # ---------------------------------------------------------------
+  RDSReadReplica:
+    Type: AWS::RDS::DBInstance
+    Condition: EnableReadReplica
+    Properties:
+      DBInstanceIdentifier: !Sub "${ProjectName}-read-${Environment}"
+      SourceDBInstanceIdentifier: !Ref RDSInstance
+      DBInstanceClass: !Ref DBInstanceClass
+      StorageType: gp3
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroupId
+      EnablePerformanceInsights: true
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Role
+          Value: read-replica
+
+  # ---------------------------------------------------------------
+  # RDS Proxy — Lambda connection multiplexing
+  # ---------------------------------------------------------------
+  RDSProxyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-rds-proxy-role-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: RDSProxySecretsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource: !Ref DBSecret
+
+  RDSProxySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "${ProjectName} RDS Proxy security group"
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref LambdaSecurityGroupId
+          Description: Allow Lambda functions to connect via proxy
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          DestinationSecurityGroupId: !Ref RDSSecurityGroupId
+          Description: Allow proxy to connect to RDS
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-rds-proxy-sg-${Environment}"
+
+  RDSProxy:
+    Type: AWS::RDS::DBProxy
+    Properties:
+      DBProxyName: !Sub "${ProjectName}-proxy-${Environment}"
+      EngineFamily: POSTGRESQL
+      RoleArn: !GetAtt RDSProxyRole.Arn
+      Auth:
+        - AuthScheme: SECRETS
+          SecretArn: !Ref DBSecret
+          IAMAuth: OPTIONAL
+      VpcSecurityGroupIds:
+        - !Ref RDSProxySecurityGroup
+      VpcSubnetIds: !Ref PrivateSubnetIds
+      RequireTLS: !If [IsProd, true, false]
+      IdleClientTimeout: 1800
+      DebugLogging: !If [IsProd, false, true]
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  RDSProxyTargetGroup:
+    Type: AWS::RDS::DBProxyTargetGroup
+    Properties:
+      DBProxyName: !Ref RDSProxy
+      DBInstanceIdentifiers:
+        - !Ref RDSInstance
+      TargetGroupName: default
+      ConnectionPoolConfigurationInfo:
+        MaxConnectionsPercent: 90
+        MaxIdleConnectionsPercent: 50
+        ConnectionBorrowTimeout: 120
+
+  # ---------------------------------------------------------------
+  # Enhanced Monitoring Role
+  # ---------------------------------------------------------------
+  RDSMonitoringRole:
+    Type: AWS::IAM::Role
+    Condition: IsProd
+    Properties:
+      RoleName: !Sub "${ProjectName}-rds-monitoring-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: monitoring.rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
 
 Outputs:
   RDSEndpoint:
     Value: !GetAtt RDSInstance.Endpoint.Address
   RDSPort:
     Value: !GetAtt RDSInstance.Endpoint.Port
+  RDSProxyEndpoint:
+    Description: RDS Proxy endpoint — use this from Lambda instead of direct RDS
+    Value: !GetAtt RDSProxy.Endpoint
+  RDSReadEndpoint:
+    Condition: EnableReadReplica
+    Description: Read Replica endpoint for read-heavy queries
+    Value: !GetAtt RDSReadReplica.Endpoint.Address
+  DBSecretArn:
+    Value: !Ref DBSecret

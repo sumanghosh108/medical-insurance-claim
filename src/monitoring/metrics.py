@@ -305,3 +305,58 @@ class PerformanceTimer:
         if self.end_time is None:
             raise RuntimeError("Timer not finished")
         return self.end_time - self.start_time
+
+
+def emit_connection_pool_metrics(
+    cloudwatch_metrics: CloudWatchMetrics,
+    environment: str = "development",
+) -> None:
+    """
+    Emit database connection pool metrics to CloudWatch.
+    
+    Reads pool stats from LambdaConnectionManager and publishes:
+    - db.connections.active (checked out connections)
+    - db.connections.idle (checked in connections)
+    - db.connections.overflow (overflow connections)
+    
+    Args:
+        cloudwatch_metrics: CloudWatchMetrics instance
+        environment: Current environment name
+    """
+    try:
+        from src.database.connection import get_lambda_connection
+        conn_mgr = get_lambda_connection()
+        pool_stats = conn_mgr.get_pool_stats()
+    except RuntimeError:
+        logger.debug("Lambda connection not initialized, skipping pool metrics")
+        return
+    
+    dims = {'Environment': environment}
+    
+    for endpoint_type in ('write', 'read'):
+        stats = pool_stats.get(endpoint_type, {})
+        if not stats or 'checked_out' not in stats:
+            continue
+        
+        type_dims = {**dims, 'Endpoint': endpoint_type}
+        
+        cloudwatch_metrics.put_metric(
+            metric_name='db.connections.active',
+            value=float(stats.get('checked_out', 0)),
+            unit='Count',
+            dimensions=type_dims,
+        )
+        cloudwatch_metrics.put_metric(
+            metric_name='db.connections.idle',
+            value=float(stats.get('checked_in', 0)),
+            unit='Count',
+            dimensions=type_dims,
+        )
+        cloudwatch_metrics.put_metric(
+            metric_name='db.connections.overflow',
+            value=float(stats.get('overflow', 0)),
+            unit='Count',
+            dimensions=type_dims,
+        )
+    
+    logger.debug("Emitted connection pool metrics to CloudWatch")

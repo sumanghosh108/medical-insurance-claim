@@ -6,19 +6,38 @@ $ProjectName = "claims-processing"
 $Functions = @(
     "$ProjectName-ingestion-$Environment",
     "$ProjectName-extraction-$Environment",
+    "$ProjectName-entity-extraction-$Environment",
     "$ProjectName-fraud-$Environment",
     "$ProjectName-workflow-$Environment"
 )
 
 Write-Host "Packaging source code into package.zip..."
 if (Test-Path package.zip) { Remove-Item package.zip }
+if (Test-Path dist_temp) { Remove-Item dist_temp -Recurse -Force }
 
-# Remove __pycache__ to prevent stale bytecode issues
-Get-ChildItem -Path src -Include "__pycache__" -Recurse -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+# Create temp directory
+New-Item -ItemType Directory -Path dist_temp -Force
 
-# Zip the contents of src directory so that 'lambda_functions', etc. are at the root
-Get-ChildItem -Path src | Compress-Archive -DestinationPath package.zip -Force
-Start-Sleep -Seconds 2
+# Install dependencies
+if (Test-Path requirements-lambda.txt) {
+    Write-Host "Installing dependencies from requirements-lambda.txt..."
+    pip install -r requirements-lambda.txt -t dist_temp --no-cache-dir
+}
+
+# Copy src contents to dist_temp
+Write-Host "Copying source code..."
+Copy-Item -Path "src\*" -Destination dist_temp -Recurse -Force
+
+# Remove __pycache__
+Get-ChildItem -Path dist_temp -Include "__pycache__" -Recurse -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
+# Zip the contents of dist_temp
+Write-Host "Zipping package..."
+Get-ChildItem -Path dist_temp | Compress-Archive -DestinationPath package.zip -Force
+Start-Sleep -Seconds 5
+
+# Cleanup
+Remove-Item dist_temp -Recurse -Force
 
 if (-not (Test-Path package.zip)) {
     Write-Error "Failed to create package.zip"

@@ -27,9 +27,10 @@ class TestUserModel:
         )
         assert user.username == 'testuser'
         assert user.email == 'test@example.com'
-        assert user.role == 'user'
-        assert user.is_active is True
-        assert user.is_admin is False
+        # Column defaults only apply on session flush, verify they are declared
+        assert User.__table__.c.role.default.arg == 'user'
+        assert User.__table__.c.is_active.default.arg is True
+        assert User.__table__.c.is_admin.default.arg is False
 
     def test_tablename(self):
         assert User.__tablename__ == 'users'
@@ -47,7 +48,7 @@ class TestPatientModel:
         )
         assert patient.mrn == 'MRN-001'
         assert patient.first_name == 'John'
-        assert patient.is_active is True
+        assert Patient.__table__.c.is_active.default.arg is True
 
     def test_tablename(self):
         assert Patient.__tablename__ == 'patients'
@@ -67,7 +68,7 @@ class TestHospitalModel:
             license_number='TX-001',
         )
         assert hospital.name == 'Test Hospital'
-        assert hospital.is_active is True
+        assert Hospital.__table__.c.is_active.default.arg is True
 
     def test_tablename(self):
         assert Hospital.__tablename__ == 'hospitals'
@@ -89,8 +90,8 @@ class TestClaimModel:
         )
         assert claim.claim_number == 'CLM-001'
         assert claim.claim_amount == 5000.00
-        assert claim.status == 'SUBMITTED'
-        assert claim.priority == 'NORMAL'
+        assert Claim.__table__.c.status.default.arg == 'SUBMITTED'
+        assert Claim.__table__.c.priority.default.arg == 'NORMAL'
 
     def test_tablename(self):
         assert Claim.__tablename__ == 'claims'
@@ -113,7 +114,7 @@ class TestDocumentModel:
             mime_type='application/pdf',
         )
         assert doc.document_type == 'medical_record'
-        assert doc.is_verified is False
+        assert Document.__table__.c.is_verified.default.arg is False
 
     def test_tablename(self):
         assert Document.__tablename__ == 'documents'
@@ -132,8 +133,8 @@ class TestFraudScoreModel:
         )
         assert score.fraud_score == 0.85
         assert score.is_fraud is True
-        assert score.risk_level == 'LOW'  # default
-        assert score.manual_review is False
+        assert FraudScore.__table__.c.risk_level.default.arg == 'LOW'
+        assert FraudScore.__table__.c.manual_review.default.arg is False
 
     def test_tablename(self):
         assert FraudScore.__tablename__ == 'fraud_scores'

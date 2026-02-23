@@ -32,6 +32,7 @@ class User(Base):
     __table_args__ = (
         Index('ix_user_username', 'username'),
         Index('ix_user_email', 'email'),
+        {'extend_existing': True},
     )
 
 
@@ -64,6 +65,7 @@ class Patient(Base):
         Index('ix_patient_mrn', 'mrn'),
         Index('ix_patient_name', 'first_name', 'last_name'),
         Index('ix_patient_email', 'email'),
+        {'extend_existing': True},
     )
 
 
@@ -93,6 +95,7 @@ class Hospital(Base):
         Index('ix_hospital_name', 'name'),
         Index('ix_hospital_npi', 'npi'),
         Index('ix_hospital_license', 'license_number'),
+        {'extend_existing': True},
     )
 
 
@@ -117,7 +120,7 @@ class Claim(Base):
     approval_date = Column(DateTime, nullable=True)
     rejection_reason = Column(Text, nullable=True)
     processing_notes = Column(Text, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    claim_metadata = Column('metadata', JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -135,6 +138,7 @@ class Claim(Base):
         Index('ix_claim_date', 'claim_date'),
         Index('ix_claim_submission', 'submission_date'),
         CheckConstraint('claim_amount > 0', name='ck_claim_amount_positive'),
+        {'extend_existing': True},
     )
 
 
@@ -166,6 +170,7 @@ class Document(Base):
         Index('ix_document_claim', 'claim_id'),
         Index('ix_document_type', 'document_type'),
         Index('ix_document_s3', 's3_key'),
+        {'extend_existing': True},
     )
 
 
@@ -200,4 +205,5 @@ class FraudScore(Base):
         Index('ix_fraud_score', 'fraud_score'),
         Index('ix_fraud_flag', 'is_fraud'),
         Index('ix_fraud_level', 'risk_level'),
+        {'extend_existing': True},
     )

@@ -35,21 +35,24 @@ Resources:
         ProjectName: !Ref ProjectName
         VpcCidr: !Ref VpcCidr
 
-  # NOTE: RDS stack disabled — free-tier account blocks RDS creation.
-  # Uncomment when your account is upgraded.
-  # RDSStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   DependsOn: VPCStack
-  #   Properties:
-  #     TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/rds.yaml"
-  #     Parameters:
-  #       Environment: !Ref Environment
-  #       ProjectName: !Ref ProjectName
-  #       ...
+  RDSStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: VPCStack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/rds.yaml"
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnetIds: !GetAtt VPCStack.Outputs.PrivateSubnetIds
+        RDSSecurityGroupId: !GetAtt VPCStack.Outputs.RDSSecurityGroupId
+        LambdaSecurityGroupId: !GetAtt VPCStack.Outputs.LambdaSecurityGroupId
 
   LambdaStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: VPCStack
+    DependsOn:
+      - VPCStack
+      - RDSStack
     Properties:
       TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/lambda.yaml"
       Parameters:
@@ -60,6 +63,8 @@ Resources:
         LambdaSecurityGroupId: !GetAtt VPCStack.Outputs.LambdaSecurityGroupId
         LambdaMemorySize: !Ref LambdaMemorySize
         LambdaTimeout: !Ref LambdaTimeout
+        RDSProxyEndpoint: !GetAtt RDSStack.Outputs.RDSProxyEndpoint
+        RDSReadEndpoint: !GetAtt RDSStack.Outputs.RDSEndpoint
 
   # NOTE: SageMaker stack disabled for free-tier deployments.
   # SageMakerStack:
@@ -77,6 +82,19 @@ Resources:
         AlertsTopicArn: !GetAtt LambdaStack.Outputs.AlertsTopicArn
         AlertEmail: !Ref AlertEmail
 
+  WorkflowStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: LambdaStack
+    Properties:
+      TemplateURL: !Sub "https://s3.amazonaws.com/${ProjectName}-templates/templates/workflow.yaml"
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+        DocumentExtractionFunctionArn: !GetAtt LambdaStack.Outputs.DocumentExtractionFunctionArn
+        EntityExtractionFunctionArn: !GetAtt LambdaStack.Outputs.EntityExtractionFunctionArn
+        FraudDetectionFunctionArn: !GetAtt LambdaStack.Outputs.FraudDetectionFunctionArn
+        WorkflowManagerFunctionArn: !GetAtt LambdaStack.Outputs.WorkflowManagerFunctionArn
+
 Outputs:
   VpcId:
     Value: !GetAtt VPCStack.Outputs.VpcId
@@ -86,3 +104,12 @@ Outputs:
     Value: !GetAtt LambdaStack.Outputs.DocumentsBucketName
   ClaimsTable:
     Value: !GetAtt LambdaStack.Outputs.ClaimsTableName
+  StateMachineArn:
+    Value: !GetAtt WorkflowStack.Outputs.StateMachineArn
+  RDSProxyEndpoint:
+    Description: Lambda functions connect through this proxy endpoint
+    Value: !GetAtt RDSStack.Outputs.RDSProxyEndpoint
+  RDSReadEndpoint:
+    Description: Read Replica endpoint for read-heavy queries
+    Value: !GetAtt RDSStack.Outputs.RDSEndpoint
+

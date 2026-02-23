@@ -5,6 +5,9 @@ from .connection import (
     ConnectionPool,
     init_database,
     get_db_connection,
+    LambdaConnectionManager,
+    init_database_for_lambda,
+    get_lambda_connection,
 )
 
 from .models import (
@@ -40,6 +43,10 @@ __all__ = [
     "ConnectionPool",
     "init_database",
     "get_db_connection",
+    # Lambda Connection
+    "LambdaConnectionManager",
+    "init_database_for_lambda",
+    "get_lambda_connection",
     # Models
     "Base",
     "User",

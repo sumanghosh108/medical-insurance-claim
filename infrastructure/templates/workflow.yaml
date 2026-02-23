@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Step Functions workflow for insurance claims processing.
+
+Parameters:
+  Environment:
+    Type: String
+  ProjectName:
+    Type: String
+  DocumentExtractionFunctionArn:
+    Type: String
+  EntityExtractionFunctionArn:
+    Type: String
+  FraudDetectionFunctionArn:
+    Type: String
+  WorkflowManagerFunctionArn:
+    Type: String
+
+Resources:
+  ClaimsProcessingStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub "${ProjectName}-workflow-${Environment}"
+      RoleArn: !GetAtt StepFunctionsRole.Arn
+      DefinitionString: !Sub
+        - |-
+          {
+            "Comment": "Insurance Claims Processing Workflow",
+            "StartAt": "DocumentExtraction",
+            "States": {
+              "DocumentExtraction": {
+                "Type": "Task",
+                "Resource": "${DocumentExtractionArn}",
+                "Next": "EntityExtraction",
+                "Retry": [
+                  {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                  }
+                ],
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "Next": "WorkflowFailed"
+                  }
+                ]
+              },
+              "EntityExtraction": {
+                "Type": "Task",
+                "Resource": "${EntityExtractionArn}",
+                "Next": "FraudDetection",
+                "Retry": [
+                  {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                  }
+                ],
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "Next": "WorkflowFailed"
+                  }
+                ]
+              },
+              "FraudDetection": {
+                "Type": "Task",
+                "Resource": "${FraudDetectionArn}",
+                "Next": "MakeDecision",
+                "Retry": [
+                  {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                  }
+                ],
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "Next": "WorkflowFailed"
+                  }
+                ]
+              },
+              "MakeDecision": {
+                "Type": "Task",
+                "Resource": "${WorkflowManagerArn}",
+                "End": true,
+                "Retry": [
+                  {
+                    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3,
+                    "BackoffRate": 2
+                  }
+                ],
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "Next": "WorkflowFailed"
+                  }
+                ]
+              },
+              "WorkflowFailed": {
+                "Type": "Fail",
+                "Cause": "Workflow failed in a previous step.",
+                "Error": "WorkflowError"
+              }
+            }
+          }
+        - {
+            DocumentExtractionArn: !Ref DocumentExtractionFunctionArn,
+            EntityExtractionArn: !Ref EntityExtractionFunctionArn,
+            FraudDetectionArn: !Ref FraudDetectionFunctionArn,
+            WorkflowManagerArn: !Ref WorkflowManagerFunctionArn
+          }
+
+  StepFunctionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource:
+                  - !Ref DocumentExtractionFunctionArn
+                  - !Ref EntityExtractionFunctionArn
+                  - !Ref FraudDetectionFunctionArn
+                  - !Ref WorkflowManagerFunctionArn
+
+Outputs:
+  StateMachineArn:
+    Value: !Ref ClaimsProcessingStateMachine
+    Export:
+      Name: !Sub "${ProjectName}-StateMachineArn-${Environment}"
