@@ -31,6 +31,9 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:testpass@localhost:5432/claims_db_nightly
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: testing
+      AWS_SECRET_ACCESS_KEY: testing
     steps:
       - uses: actions/checkout@v4
 
