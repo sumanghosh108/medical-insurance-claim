@@ -1,28 +1,32 @@
 {
-    "Parameters": [
-        {
-            "ParameterKey": "Environment",
-            "ParameterValue": "development"
-        },
-        {
-            "ParameterKey": "ProjectName",
-            "ParameterValue": "claims-processing"
-        },
-        {
-            "ParameterKey": "LambdaMemorySize",
-            "ParameterValue": "256"
-        },
-        {
-            "ParameterKey": "LambdaTimeout",
-            "ParameterValue": "300"
-        },
-        {
-            "ParameterKey": "VpcCidr",
-            "ParameterValue": "10.0.0.0/16"
-        },
-        {
-            "ParameterKey": "AlertEmail",
-            "ParameterValue": "sum666504@gmail.com"
-        }
-    ]
+    "Parameters":  [
+                       {
+                           "ParameterKey":  "Environment",
+                           "ParameterValue":  "development"
+                       },
+                       {
+                           "ParameterKey":  "ProjectName",
+                           "ParameterValue":  "claims-processing"
+                       },
+                       {
+                           "ParameterKey":  "LambdaMemorySize",
+                           "ParameterValue":  "256"
+                       },
+                       {
+                           "ParameterKey":  "LambdaTimeout",
+                           "ParameterValue":  "300"
+                       },
+                       {
+                           "ParameterKey":  "VpcCidr",
+                           "ParameterValue":  "10.0.0.0/16"
+                       },
+                       {
+                           "ParameterKey":  "AlertEmail",
+                           "ParameterValue":  "sum666504@gmail.com"
+                       },
+                       {
+                           "ParameterKey":  "LambdaImageUri",
+                           "ParameterValue":  "688353498368.dkr.ecr.ap-south-1.amazonaws.com/claims-processing-lambda:development"
+                       }
+                   ]
 }

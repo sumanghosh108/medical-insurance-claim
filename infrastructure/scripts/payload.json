@@ -1,0 +1,3 @@
+{
+  "body": "{\"patient_id\": \"P-123\", \"hospital_id\": \"H-456\", \"claim_amount\": 100.0, \"treatment_type\": \"Consultation\", \"diagnosis_code\": \"D-789\", \"claim_date\": \"2026-02-23T12:00:00Z\", \"document\": \"dGVzdCBkb2N1bWVudA==\", \"document_type\": \"txt\"}"
+}

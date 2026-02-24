@@ -1,6 +1,17 @@
+# Lambda dependencies
 pandas
 numpy
 scikit-learn
 joblib
-boto3
-botocore
+sqlalchemy
+psycopg2-binary
+python-json-logger
+requests
+pydantic
+python-dotenv
+opencv-python-headless
+pytesseract
+pdf2image
+pillow
+scipy
+nltk

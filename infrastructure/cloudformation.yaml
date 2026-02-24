@@ -24,6 +24,9 @@ Parameters:
   AlertEmail:
     Type: String
     Default: sum666504@gmail.com
+  LambdaImageUri:
+    Type: String
+    Description: URI of the Docker image in ECR for heavy ML lambdas
 
 Resources:
   VPCStack:
@@ -64,7 +67,8 @@ Resources:
         LambdaMemorySize: !Ref LambdaMemorySize
         LambdaTimeout: !Ref LambdaTimeout
         RDSProxyEndpoint: !GetAtt RDSStack.Outputs.RDSProxyEndpoint
-        RDSReadEndpoint: !GetAtt RDSStack.Outputs.RDSEndpoint
+        RDSReadEndpoint: !GetAtt RDSStack.Outputs.RDSReadEndpoint
+        LambdaImageUri: !Ref LambdaImageUri
 
   # NOTE: SageMaker stack disabled for free-tier deployments.
   # SageMakerStack:

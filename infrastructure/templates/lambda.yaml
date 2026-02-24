@@ -20,6 +20,9 @@ Parameters:
   LambdaSecurityGroupId:
     Type: String
     Description: Security group ID for Lambda functions (from VPC stack)
+  LambdaImageUri:
+    Type: String
+    Description: URI of the Docker image in ECR for heavy ML lambdas
 
   # RDS Proxy and Read Replica endpoints
   RDSProxyEndpoint:
@@ -184,6 +187,7 @@ Resources:
           DATABASE_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSProxyEndpoint}:5432/${DBName}"
           DATABASE_READ_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSReadEndpoint}:5432/${DBName}"
           DB_USE_PROXY: "true"
+          STATE_MACHINE_ARN: !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${ProjectName}-workflow-${Environment}"
 
 
   ClaimIngestionFunctionUrl:
@@ -203,17 +207,15 @@ Resources:
       Action: lambda:InvokeFunctionUrl
       FunctionUrlAuthType: NONE
 
-  DocumentExtractionFunction:
+  DocumentExtractionFunctionV2:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "${ProjectName}-extraction-${Environment}"
-      Runtime: python3.11
+      FunctionName: !Sub "${ProjectName}-extraction-${Environment}-v2"
+      PackageType: Image
       Code:
-        ZipFile: |
-          def lambda_handler(event, context):
-              print("Placeholder code. Deploy actual code via CLI.")
-              return {"statusCode": 200, "body": "Placeholder"}
-      Handler: lambda_functions.document_extraction_orchestrator.lambda_handler
+        ImageUri: !Ref LambdaImageUri
+      ImageConfig:
+        Command: ["lambda_functions.document_extraction_orchestrator.lambda_handler"]
       Role: !GetAtt LambdaRole.Arn
       MemorySize: 1024
       Timeout: !Ref LambdaTimeout
@@ -231,17 +233,15 @@ Resources:
           DATABASE_READ_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSReadEndpoint}:5432/${DBName}"
           DB_USE_PROXY: "true"
 
-  EntityExtractionFunction:
+  EntityExtractionFunctionV2:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "${ProjectName}-entity-extraction-${Environment}"
-      Runtime: python3.11
+      FunctionName: !Sub "${ProjectName}-entity-extraction-${Environment}-v2"
+      PackageType: Image
       Code:
-        ZipFile: |
-          def lambda_handler(event, context):
-              print("Placeholder code. Deploy actual code via CLI.")
-              return {"statusCode": 200, "body": "Placeholder"}
-      Handler: src.lambda_functions.entity_extraction_processor.lambda_handler
+        ImageUri: !Ref LambdaImageUri
+      ImageConfig:
+        Command: ["lambda_functions.entity_extraction_processor.lambda_handler"]
       Role: !GetAtt LambdaRole.Arn
       MemorySize: 1024
       Timeout: !Ref LambdaTimeout
@@ -259,17 +259,15 @@ Resources:
           DATABASE_READ_URL: !Sub "postgresql://postgres:${DBMasterPassword}@${RDSReadEndpoint}:5432/${DBName}"
           DB_USE_PROXY: "true"
 
-  FraudDetectionFunction:
+  FraudDetectionFunctionV2:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub "${ProjectName}-fraud-${Environment}"
-      Runtime: python3.11
+      FunctionName: !Sub "${ProjectName}-fraud-${Environment}-v2"
+      PackageType: Image
       Code:
-        ZipFile: |
-          def lambda_handler(event, context):
-              print("Placeholder code. Deploy actual code via CLI.")
-              return {"statusCode": 200, "body": "Placeholder"}
-      Handler: lambda_functions.fraud_detection_inference.lambda_handler
+        ImageUri: !Ref LambdaImageUri
+      ImageConfig:
+        Command: ["lambda_functions.fraud_detection_inference.lambda_handler"]
       Role: !GetAtt LambdaRole.Arn
       MemorySize: 2048
       Timeout: !Ref LambdaTimeout
@@ -327,10 +325,10 @@ Outputs:
   ClaimIngestionFunctionArn:
     Value: !GetAtt ClaimIngestionFunction.Arn
   DocumentExtractionFunctionArn:
-    Value: !GetAtt DocumentExtractionFunction.Arn
+    Value: !GetAtt DocumentExtractionFunctionV2.Arn
   EntityExtractionFunctionArn:
-    Value: !GetAtt EntityExtractionFunction.Arn
+    Value: !GetAtt EntityExtractionFunctionV2.Arn
   FraudDetectionFunctionArn:
-    Value: !GetAtt FraudDetectionFunction.Arn
+    Value: !GetAtt FraudDetectionFunctionV2.Arn
   WorkflowManagerFunctionArn:
     Value: !GetAtt WorkflowManagerFunction.Arn

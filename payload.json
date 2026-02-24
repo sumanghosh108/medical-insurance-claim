@@ -1,0 +1,12 @@
+{
+    "body":  {
+                 "treatment_type":  "Emergency Room Visit",
+                 "claim_amount":  5500,
+                 "claim_date":  "2025-01-15T08:30:00Z",
+                 "diagnosis_code":  "R10.9",
+                 "patient_id":  "pt-test-0001-0001-000000000001",
+                 "hospital_id":  "hosp-test-0001-0001-000000000001",
+                 "document":  "",
+                 "document_type":  "png"
+             }
+}

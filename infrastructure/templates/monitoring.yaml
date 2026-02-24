@@ -91,6 +91,7 @@ Resources:
       EvaluationPeriods: 2
       Threshold: 5
       ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
       AlarmActions:
         - !Ref AlertsTopicArn
 

@@ -4,22 +4,31 @@
 
 FROM public.ecr.aws/lambda/python:3.11
 
-# Install system dependencies for OCR
+# Install system dependencies for OCR and building ML packages
 RUN yum install -y \
+    gcc \
+    gcc-c++ \
+    make \
+    python3-devel \
     tesseract \
     poppler-utils \
     && yum clean all
 
 # Copy requirements and install
-COPY requirements.txt ${LAMBDA_TASK_ROOT}/
-RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
+# Upgrade pip and install build dependencies
+RUN pip install --upgrade pip wheel setuptools
+
+COPY requirements-lambda.txt ${LAMBDA_TASK_ROOT}/
+RUN pip install --no-cache-dir \
+    --prefer-binary \
+    -r ${LAMBDA_TASK_ROOT}/requirements-lambda.txt
 
 # Copy application code
-COPY src/ ${LAMBDA_TASK_ROOT}/src/
+COPY src/ ${LAMBDA_TASK_ROOT}/
 COPY config/ ${LAMBDA_TASK_ROOT}/config/
 
 ENV PYTHONPATH=${LAMBDA_TASK_ROOT} \
     ENVIRONMENT=production
 
 # Default handler (override per-function via CMD or env)
-CMD ["src.lambda_functions.claim_ingestion_handler.lambda_handler"]
+CMD ["lambda_functions.claim_ingestion_handler.lambda_handler"]

@@ -11,17 +11,17 @@ REGION="${AWS_REGION:-ap-south-1}"
 echo "=== Deploying Lambda Functions: ${ENVIRONMENT} ==="
 
 FUNCTIONS=(
-    "ingestion:src.lambda_functions.claim_ingestion_handler.lambda_handler"
-    "extraction:src.lambda_functions.document_extraction_orchestrator.lambda_handler"
-    "entity:src.lambda_functions.entity_extraction_processor.lambda_handler"
-    "fraud:src.lambda_functions.fraud_detection_inference.lambda_handler"
-    "workflow:src.lambda_functions.workflow_state_manager.lambda_handler"
+    "ingestion:lambda_functions.claim_ingestion_handler.lambda_handler"
+    "extraction:lambda_functions.document_extraction_orchestrator.lambda_handler"
+    "entity:lambda_functions.entity_extraction_processor.lambda_handler"
+    "fraud:lambda_functions.fraud_detection_inference.lambda_handler"
+    "workflow:lambda_functions.workflow_state_manager.lambda_handler"
 )
 
 # Package code
 echo "[1/3] Packaging code..."
 PACKAGE_DIR=$(mktemp -d)
-cp -r src/ "${PACKAGE_DIR}/"
+cp -r src/* "${PACKAGE_DIR}/"
 cp -r config/ "${PACKAGE_DIR}/"
 pip install -r requirements.txt -t "${PACKAGE_DIR}/" --quiet
 

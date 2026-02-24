@@ -1,0 +1,1 @@
+{"statusCode": 202, "body": "{\"claim_id\": \"ece3a0a1-fc94-4975-8676-af481ba323a9\", \"status\": \"processing\", \"execution_arn\": \"arn:aws:states:ap-south-1:688353498368:execution:claims-processing-workflow-development:claim-ece3a0a1-fc94-4975-8676-af481ba323a9\", \"message\": \"Claim processing started\"}", "headers": {"Content-Type": "application/json"}}

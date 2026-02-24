@@ -14,10 +14,10 @@ Parameters:
     Type: CommaDelimitedList
   DBInstanceClass:
     Type: String
-    Default: db.t3.medium
+    Default: db.t3.micro
   DBAllocatedStorage:
     Type: Number
-    Default: 50
+    Default: 20
   DBMasterPassword:
     Type: String
     NoEcho: true
@@ -32,6 +32,7 @@ Parameters:
 Conditions:
   IsProd: !Equals [!Ref Environment, production]
   EnableReadReplica: !Equals [!Ref Environment, production]
+  EnableRDSProxy: !Equals [!Ref Environment, production]
 
 Resources:
   # ---------------------------------------------------------------
@@ -39,18 +40,17 @@ Resources:
   # ---------------------------------------------------------------
   DBSecret:
     Type: AWS::SecretsManager::Secret
+    DependsOn: RDSInstance
     Properties:
       Name: !Sub "${ProjectName}-db-credentials-${Environment}"
       Description: RDS master credentials used by RDS Proxy
-      SecretString: !Sub |
-        {
-          "username": "postgres",
-          "password": "${DBMasterPassword}",
-          "engine": "postgres",
-          "host": "${RDSInstance.Endpoint.Address}",
-          "port": 5432,
-          "dbname": "claims_db"
-        }
+      SecretString: !Join
+        - ""
+        - - '{"username": "postgres", "password": "'
+          - !Ref DBMasterPassword
+          - '", "engine": "postgres", "host": "'
+          - !GetAtt RDSInstance.Endpoint.Address
+          - '", "port": 5432, "dbname": "claims_db"}'
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -81,7 +81,7 @@ Resources:
       VPCSecurityGroups:
         - !Ref RDSSecurityGroupId
       MultiAZ: !If [IsProd, true, false]
-      BackupRetentionPeriod: !If [IsProd, 35, 7]
+      BackupRetentionPeriod: !If [IsProd, 35, 0]
       PreferredBackupWindow: "03:00-04:00"
       PreferredMaintenanceWindow: "sun:04:00-sun:05:00"
       DeletionProtection: !If [IsProd, true, false]
@@ -120,6 +120,7 @@ Resources:
   # ---------------------------------------------------------------
   RDSProxyRole:
     Type: AWS::IAM::Role
+    Condition: EnableRDSProxy
     Properties:
       RoleName: !Sub "${ProjectName}-rds-proxy-role-${Environment}"
       AssumeRolePolicyDocument:
@@ -142,6 +143,7 @@ Resources:
 
   RDSProxySecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    Condition: EnableRDSProxy
     Properties:
       GroupDescription: !Sub "${ProjectName} RDS Proxy security group"
       VpcId: !Ref VpcId
@@ -163,6 +165,7 @@ Resources:
 
   RDSProxy:
     Type: AWS::RDS::DBProxy
+    Condition: EnableRDSProxy
     Properties:
       DBProxyName: !Sub "${ProjectName}-proxy-${Environment}"
       EngineFamily: POSTGRESQL
@@ -170,7 +173,7 @@ Resources:
       Auth:
         - AuthScheme: SECRETS
           SecretArn: !Ref DBSecret
-          IAMAuth: OPTIONAL
+          IAMAuth: DISABLED
       VpcSecurityGroupIds:
         - !Ref RDSProxySecurityGroup
       VpcSubnetIds: !Ref PrivateSubnetIds
@@ -183,6 +186,7 @@ Resources:
 
   RDSProxyTargetGroup:
     Type: AWS::RDS::DBProxyTargetGroup
+    Condition: EnableRDSProxy
     Properties:
       DBProxyName: !Ref RDSProxy
       DBInstanceIdentifiers:
@@ -218,10 +222,9 @@ Outputs:
     Value: !GetAtt RDSInstance.Endpoint.Port
   RDSProxyEndpoint:
     Description: RDS Proxy endpoint — use this from Lambda instead of direct RDS
-    Value: !GetAtt RDSProxy.Endpoint
+    Value: !If [EnableRDSProxy, !GetAtt RDSProxy.Endpoint, !GetAtt RDSInstance.Endpoint.Address]
   RDSReadEndpoint:
-    Condition: EnableReadReplica
-    Description: Read Replica endpoint for read-heavy queries
-    Value: !GetAtt RDSReadReplica.Endpoint.Address
+    Description: Read Replica endpoint for read-heavy queries or primary if not prod
+    Value: !If [EnableReadReplica, !GetAtt RDSReadReplica.Endpoint.Address, !GetAtt RDSInstance.Endpoint.Address]
   DBSecretArn:
     Value: !Ref DBSecret
