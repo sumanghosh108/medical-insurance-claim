@@ -240,3 +240,138 @@ class TestGetLambdaConnection:
                 get_lambda_connection()
         finally:
             _conn_mod._lambda_connection = original
+
+
+# ----------------------------------------------------------------
+# Health Check — Connected positive path
+# ----------------------------------------------------------------
+class TestHealthCheckConnected:
+    def test_both_true_when_engines_respond(self):
+        """Engines that successfully execute SELECT 1 → both write and read True."""
+        engine = _mock_engine()
+        with patch.object(_conn_mod, "create_engine", return_value=engine):
+            mgr = LambdaConnectionManager(write_url="postgresql://u:p@proxy/db")
+            mgr.connect()
+        # Simulate successful SELECT 1 on both endpoints
+        conn_ctx = MagicMock()
+        engine.connect.return_value.__enter__ = MagicMock(return_value=conn_ctx)
+        engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+        result = mgr.health_check()
+        assert result["write"] is True
+        assert result["read"] is True
+
+    def test_false_when_engine_raises(self):
+        """An engine that raises on connect → health_check returns False for that endpoint."""
+        engine = _mock_engine()
+        with patch.object(_conn_mod, "create_engine", return_value=engine):
+            mgr = LambdaConnectionManager(write_url="postgresql://u:p@proxy/db")
+            mgr.connect()
+        engine.connect.side_effect = Exception("connection refused")
+        result = mgr.health_check()
+        assert result["write"] is False
+        assert result["read"] is False
+
+
+# ----------------------------------------------------------------
+# Disconnect — dual endpoint disposes both engines
+# ----------------------------------------------------------------
+class TestDisconnectDualEndpoint:
+    def test_both_engines_disposed_independently(self):
+        """With separate read/write URLs, disconnect must dispose both engines."""
+        write_engine = _mock_engine()
+        read_engine = _mock_engine()
+        call_count = [0]
+
+        def fake_create(url, **kw):
+            call_count[0] += 1
+            return write_engine if call_count[0] == 1 else read_engine
+
+        with patch.object(_conn_mod, "create_engine", side_effect=fake_create):
+            mgr = LambdaConnectionManager(
+                write_url="postgresql://u:p@proxy/db",
+                read_url="postgresql://u:p@replica/db",
+            )
+            mgr.connect()
+
+        mgr.disconnect()
+        write_engine.dispose.assert_called_once()
+        read_engine.dispose.assert_called_once()
+
+    def test_single_engine_disposed_once(self):
+        """With a single endpoint, dispose is only called once."""
+        engine = _mock_engine()
+        with patch.object(_conn_mod, "create_engine", return_value=engine):
+            mgr = LambdaConnectionManager(write_url="postgresql://u:p@proxy/db")
+            mgr.connect()
+        mgr.disconnect()
+        engine.dispose.assert_called_once()
+
+
+# ----------------------------------------------------------------
+# write_scope / read_scope context managers
+# ----------------------------------------------------------------
+class TestWriteScope:
+    def _connected_mgr(self):
+        engine = _mock_engine()
+        with patch.object(_conn_mod, "create_engine", return_value=engine):
+            mgr = LambdaConnectionManager(write_url="postgresql://u:p@proxy/db")
+            mgr.connect()
+        return mgr
+
+    def test_write_scope_commits_on_success(self):
+        mgr = self._connected_mgr()
+        mock_session = MagicMock()
+        mgr._write_session_factory = MagicMock(return_value=mock_session)
+
+        with mgr.write_scope():
+            pass
+
+        mock_session.commit.assert_called_once()
+        mock_session.close.assert_called_once()
+
+    def test_write_scope_rollback_on_sqlalchemy_error(self):
+        from sqlalchemy.exc import SQLAlchemyError
+
+        mgr = self._connected_mgr()
+        mock_session = MagicMock()
+        mgr._write_session_factory = MagicMock(return_value=mock_session)
+
+        with pytest.raises(SQLAlchemyError):
+            with mgr.write_scope():
+                raise SQLAlchemyError("forced error")
+
+        mock_session.rollback.assert_called_once()
+        mock_session.close.assert_called_once()
+
+
+class TestReadScope:
+    def test_read_scope_closes_session_on_success(self):
+        engine = _mock_engine()
+        with patch.object(_conn_mod, "create_engine", return_value=engine):
+            mgr = LambdaConnectionManager(write_url="postgresql://u:p@proxy/db")
+            mgr.connect()
+
+        mock_session = MagicMock()
+        mgr._read_session_factory = MagicMock(return_value=mock_session)
+
+        with mgr.read_scope():
+            pass
+
+        mock_session.close.assert_called_once()
+
+    def test_read_scope_closes_session_on_error(self):
+        from sqlalchemy.exc import SQLAlchemyError
+
+        engine = _mock_engine()
+        with patch.object(_conn_mod, "create_engine", return_value=engine):
+            mgr = LambdaConnectionManager(write_url="postgresql://u:p@proxy/db")
+            mgr.connect()
+
+        mock_session = MagicMock()
+        mgr._read_session_factory = MagicMock(return_value=mock_session)
+
+        with pytest.raises(SQLAlchemyError):
+            with mgr.read_scope():
+                raise SQLAlchemyError("read error")
+
+        mock_session.close.assert_called_once()

@@ -156,6 +156,69 @@ class TestFraudDetectionInference:
         result = handler.handle({}, None)
         assert isinstance(result, dict)
 
+    @patch.dict(os.environ, {
+        'MODEL_BUCKET': 'test-models',
+        'MODEL_KEY': 'models/fraud/v2.1.0.joblib',
+        'RESULTS_BUCKET': 'test-results',
+        'CLAIMS_TABLE': 'test-claims',
+        'FRAUD_SCORES_TABLE': 'test-fraud-scores',
+        'SNS_TOPIC': 'arn:aws:sns:ap-south-1:000000000000:test',
+        'FRAUD_THRESHOLD_HIGH': '0.8',
+        'FRAUD_THRESHOLD_MEDIUM': '0.5',
+        'MODEL_VERSION': 'v2.1.0',
+    })
+    @patch('boto3.client')
+    @patch('boto3.resource')
+    def test_handle_positive_path(self, mock_resource, mock_client):
+        """End-to-end positive path: mocked model + AWS clients → FRAUD_SCORED."""
+        import numpy as np
+
+        # Build a mock trained model
+        mock_model = MagicMock()
+        mock_model.feature_names = ['claim_amount', 'claim_amount_log', 'missing_fields']
+        mock_model.prepare_features = MagicMock(return_value=MagicMock())
+        mock_model.predict = MagicMock(return_value={
+            'fraud_score': np.array([0.3]),
+            'prediction': np.array([0]),
+            'confidence': np.array([0.7]),
+        })
+
+        # Mock S3 put_object and DynamoDB table
+        mock_s3 = MagicMock()
+        mock_dynamodb = MagicMock()
+        mock_table = MagicMock()
+        mock_dynamodb.Table.return_value = mock_table
+        mock_client.return_value = mock_s3
+        mock_resource.return_value = mock_dynamodb
+
+        handler = FraudDetectionInference()
+
+        # Inject pre-loaded model to skip S3 download
+        import src.lambda_functions.fraud_detection_inference as _mod
+        _mod._cached_model = mock_model
+
+        try:
+            event = {
+                'claim_id': 'claim-abc-123',
+                'claim_amount': 5000.0,
+                'hospital_id': 'HOSP-1',
+                'patient_id': 'PAT-1',
+                'claim_date': '2024-01-15T10:00:00',
+                'treatment_type': 'Surgery',
+                'diagnosis_code': 'K35',
+                'document_key': 'docs/claim-abc-123.pdf',
+            }
+            result = handler.handle(event, None)
+        finally:
+            _mod._cached_model = None  # clean up cache
+
+        assert result['status'] == 'FRAUD_SCORED'
+        assert 'fraud_score' in result
+        assert result['risk_level'] == 'LOW'   # 0.3 < 0.5 threshold
+        assert result['claim_id'] == 'claim-abc-123'
+        mock_s3.put_object.assert_called_once()
+        mock_table.put_item.assert_called_once()
+
 
 # ----------------------------------------------------------------
 # WorkflowStateManager

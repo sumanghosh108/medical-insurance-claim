@@ -195,3 +195,116 @@ class TestBase:
     def test_base_exists(self):
         assert Base is not None
         assert hasattr(Base, 'metadata')
+
+
+# ----------------------------------------------------------------
+# DatabaseConnection — connect & session_scope
+# ----------------------------------------------------------------
+class TestDatabaseConnectionAdvanced:
+    """Additional coverage for connect() and session_scope()."""
+
+    def test_connect_success_sets_engine_and_factory(self):
+        """connect() should set engine and session_factory on success."""
+        mock_engine = MagicMock()
+        mock_conn = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        with patch('src.database.connection.create_engine', return_value=mock_engine):
+            conn = DatabaseConnection(
+                database_url='postgresql://user:pass@localhost/testdb',
+                use_static_pool=True,
+            )
+            conn.connect()
+
+        assert conn.engine is mock_engine
+        assert conn.session_factory is not None
+
+    def test_get_session_raises_when_not_connected(self):
+        """get_session() raises RuntimeError if connect() was not called."""
+        conn = DatabaseConnection('postgresql://user:pass@localhost/testdb')
+        with pytest.raises(RuntimeError, match="Database not connected"):
+            conn.get_session()
+
+    def test_session_scope_rollback_on_sqlalchemy_error(self):
+        """session_scope() must rollback and re-raise on SQLAlchemyError."""
+        from sqlalchemy.exc import SQLAlchemyError
+
+        mock_engine = MagicMock()
+        mock_conn = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        mock_session = MagicMock()
+        mock_factory = MagicMock(return_value=mock_session)
+
+        with patch('src.database.connection.create_engine', return_value=mock_engine):
+            conn = DatabaseConnection(
+                'postgresql://user:pass@localhost/testdb',
+                use_static_pool=True,
+            )
+            conn.connect()
+            conn.session_factory = mock_factory
+
+        with pytest.raises(SQLAlchemyError):
+            with conn.session_scope():
+                raise SQLAlchemyError("forced db error")
+
+        mock_session.rollback.assert_called_once()
+        mock_session.close.assert_called_once()
+
+    def test_disconnect_disposes_engine(self):
+        """disconnect() should call engine.dispose()."""
+        mock_engine = MagicMock()
+        mock_conn = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        with patch('src.database.connection.create_engine', return_value=mock_engine):
+            conn = DatabaseConnection(
+                'postgresql://user:pass@localhost/testdb',
+                use_static_pool=True,
+            )
+            conn.connect()
+
+        conn.disconnect()
+        mock_engine.dispose.assert_called_once()
+
+
+# ----------------------------------------------------------------
+# ConnectionPool — register/get lifecycle
+# ----------------------------------------------------------------
+class TestConnectionPoolAdvanced:
+    """Lifecycle tests for ConnectionPool."""
+
+    def test_register_and_get_by_name(self):
+        """Registering a connection should make it retrievable by name."""
+        mock_engine = MagicMock()
+        mock_conn_ctx = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn_ctx)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        with patch('src.database.connection.create_engine', return_value=mock_engine):
+            pool = ConnectionPool()
+            pool.register('primary', 'postgresql://u:p@host/db', is_default=True)
+            retrieved = pool.get('primary')
+
+        assert retrieved is not None
+        assert pool.default_key == 'primary'
+
+    def test_close_all_calls_disconnect_on_all(self):
+        """close_all() should call disconnect() (dispose) on every registered connection."""
+        mock_engine = MagicMock()
+        mock_conn_ctx = MagicMock()
+        mock_engine.connect.return_value.__enter__ = MagicMock(return_value=mock_conn_ctx)
+        mock_engine.connect.return_value.__exit__ = MagicMock(return_value=False)
+
+        with patch('src.database.connection.create_engine', return_value=mock_engine):
+            pool = ConnectionPool()
+            pool.register('db1', 'postgresql://u:p@host1/db')
+            pool.register('db2', 'postgresql://u:p@host2/db')
+            pool.close_all()
+
+        # dispose should be called for each registered engine
+        assert mock_engine.dispose.call_count >= 2
+

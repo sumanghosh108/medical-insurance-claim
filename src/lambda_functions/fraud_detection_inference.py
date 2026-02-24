@@ -19,10 +19,6 @@ from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
-s3 = boto3.client('s3')
-dynamodb = boto3.resource('dynamodb')
-sns = boto3.client('sns')
-
 MODEL_BUCKET = os.environ.get('MODEL_BUCKET', 'claims-processing-models')
 MODEL_KEY = os.environ.get('MODEL_KEY', 'models/fraud_detection/latest/model.joblib')
 RESULTS_BUCKET = os.environ.get('RESULTS_BUCKET', 'claims-processing-results')
@@ -42,11 +38,12 @@ class FraudDetectionInference:
     """Run fraud detection inference on insurance claims."""
 
     def __init__(self):
-        """Initialize with AWS clients."""
-        self.s3 = s3
-        self.claims_table = dynamodb.Table(CLAIMS_TABLE)
-        self.fraud_scores_table = dynamodb.Table(FRAUD_SCORES_TABLE)
-        self.sns = sns
+        """Initialize with AWS clients (deferred to avoid cold-start credential errors)."""
+        self.s3 = boto3.client('s3')
+        _dynamodb = boto3.resource('dynamodb')
+        self.claims_table = _dynamodb.Table(CLAIMS_TABLE)
+        self.fraud_scores_table = _dynamodb.Table(FRAUD_SCORES_TABLE)
+        self.sns = boto3.client('sns')
         self.model = None
 
     def _load_model(self):
