@@ -1,0 +1,135 @@
+/* ── Customer Portal Design Tokens (extends index.css) ─────────── */
+/* Warmer, friendlier palette vs the admin's cool navy */
+:root {
+    --portal-bg: #060b18;
+    --portal-surface: rgba(12, 22, 48, 0.88);
+    --portal-elevated: rgba(18, 32, 68, 0.92);
+    --portal-primary: #6366f1;
+    /* indigo */
+    --portal-accent: #8b5cf6;
+    /* violet */
+    --portal-success: #10b981;
+    --portal-warning: #f59e0b;
+    --portal-danger: #ef4444;
+    --portal-border: rgba(99, 102, 241, 0.18);
+    --portal-glow: rgba(99, 102, 241, 0.25);
+}
+
+/* Portal glass panel */
+.portal-glass {
+    background: var(--portal-surface);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--portal-border);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Portal card hover effect */
+.portal-card {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.portal-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* Portal step tracker */
+.step-track {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.step-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.step-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.step-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+    transition: all 0.3s;
+}
+
+.step-line {
+    width: 2px;
+    flex: 1;
+    min-height: 32px;
+    margin: 4px 0;
+}
+
+/* Upload zone */
+.upload-zone {
+    border: 2px dashed var(--portal-border);
+    border-radius: 16px;
+    padding: 3.5rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(99, 102, 241, 0.02);
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+    border-color: var(--portal-primary);
+    background: rgba(99, 102, 241, 0.07);
+}
+
+/* Status pill */
+.portal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.875rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Alert box */
+.portal-alert {
+    display: flex;
+    gap: 0.875rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+}
+
+.portal-alert-info {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.portal-alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.portal-alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.portal-alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}

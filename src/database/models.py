@@ -36,6 +36,77 @@ class User(Base):
     )
 
 
+class CustomerUser(Base):
+    """Customer / Policyholder model — registered via the public portal."""
+    __tablename__ = "customer_users"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+
+    # Personal info
+    full_name = Column(String(255), nullable=False)
+    father_name = Column(String(255), nullable=False)
+    phone = Column(String(30), nullable=False)
+    gender = Column(String(20), nullable=False)          # male, female, other, prefer_not_to_say
+    marital_status = Column(String(20), nullable=False)   # single, married, divorced, widowed
+
+    # Addresses
+    permanent_address = Column(Text, nullable=False)
+    current_address = Column(Text, nullable=False)
+
+    # Account state
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_verified = Column(Boolean, default=False, nullable=False)
+    last_login = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index('ix_customer_email', 'email'),
+        Index('ix_customer_phone', 'phone'),
+        Index('ix_customer_name', 'full_name'),
+        {'extend_existing': True},
+    )
+
+
+class StaffUser(Base):
+    """Admin / Staff model — internal employees who access the admin panel."""
+    __tablename__ = "staff_users"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    username = Column(String(100), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+
+    # Profile
+    full_name = Column(String(255), nullable=False)
+    phone = Column(String(30), nullable=True)
+    employee_id = Column(String(50), unique=True, nullable=False, index=True)  # EMP-001, etc.
+    department = Column(String(100), nullable=False)      # Claims, Fraud, IT, Management
+    designation = Column(String(100), nullable=True)      # Claims Adjuster, Senior Manager, etc.
+
+    # Access control
+    role = Column(String(50), nullable=False, default="adjuster")  # admin, adjuster, manager, viewer
+    access_level = Column(Integer, nullable=False, default=1)      # 1=basic, 2=elevated, 3=full
+    is_active = Column(Boolean, default=True, nullable=False)
+    last_login = Column(DateTime, nullable=True)
+    failed_login_attempts = Column(Integer, default=0, nullable=False)
+    locked_until = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index('ix_staff_username', 'username'),
+        Index('ix_staff_email', 'email'),
+        Index('ix_staff_employee_id', 'employee_id'),
+        Index('ix_staff_department', 'department'),
+        Index('ix_staff_role', 'role'),
+        {'extend_existing': True},
+    )
+
+
 class Patient(Base):
     """Patient model."""
     __tablename__ = "patients"

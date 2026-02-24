@@ -202,17 +202,93 @@ class AddFraudScoresIndexMigration(Migration):
             logger.error(f"Failed to drop indexes: {e}")
 
 
+class AddUserTablesMigration(Migration):
+    """003: Create customer_users and staff_users tables."""
+
+    version = "003"
+    description = "Create customer_users and staff_users tables"
+
+    def up(self, session: Session) -> None:
+        """Create new user tables."""
+        try:
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS customer_users (
+                    id VARCHAR(36) PRIMARY KEY,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    full_name VARCHAR(255) NOT NULL,
+                    father_name VARCHAR(255) NOT NULL,
+                    phone VARCHAR(30) NOT NULL,
+                    gender VARCHAR(20) NOT NULL,
+                    marital_status VARCHAR(20) NOT NULL,
+                    permanent_address TEXT NOT NULL,
+                    current_address TEXT NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+                    is_verified BOOLEAN DEFAULT FALSE NOT NULL,
+                    last_login TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            session.execute(text("CREATE INDEX IF NOT EXISTS ix_customer_email ON customer_users(email)"))
+            session.execute(text("CREATE INDEX IF NOT EXISTS ix_customer_phone ON customer_users(phone)"))
+            session.execute(text("CREATE INDEX IF NOT EXISTS ix_customer_name ON customer_users(full_name)"))
+
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS staff_users (
+                    id VARCHAR(36) PRIMARY KEY,
+                    username VARCHAR(100) UNIQUE NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    full_name VARCHAR(255) NOT NULL,
+                    phone VARCHAR(30),
+                    employee_id VARCHAR(50) UNIQUE NOT NULL,
+                    department VARCHAR(100) NOT NULL,
+                    designation VARCHAR(100),
+                    role VARCHAR(50) DEFAULT 'adjuster' NOT NULL,
+                    access_level INTEGER DEFAULT 1 NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+                    last_login TIMESTAMP,
+                    failed_login_attempts INTEGER DEFAULT 0 NOT NULL,
+                    locked_until TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            session.execute(text("CREATE INDEX IF NOT EXISTS ix_staff_username ON staff_users(username)"))
+            session.execute(text("CREATE INDEX IF NOT EXISTS ix_staff_email ON staff_users(email)"))
+            session.execute(text("CREATE INDEX IF NOT EXISTS ix_staff_employee_id ON staff_users(employee_id)"))
+            session.execute(text("CREATE INDEX IF NOT EXISTS ix_staff_department ON staff_users(department)"))
+            session.execute(text("CREATE INDEX IF NOT EXISTS ix_staff_role ON staff_users(role)"))
+
+            session.commit()
+            logger.info("customer_users and staff_users tables created")
+        except Exception as e:
+            logger.error(f"Failed to create user tables: {e}")
+            raise
+
+    def down(self, session: Session) -> None:
+        """Drop user tables."""
+        try:
+            session.execute(text("DROP TABLE IF EXISTS customer_users"))
+            session.execute(text("DROP TABLE IF EXISTS staff_users"))
+            session.commit()
+        except Exception as e:
+            logger.error(f"Failed to drop user tables: {e}")
+
+
 def migrate_database(db_connection: DatabaseConnection) -> None:
     """Run all migrations."""
     manager = MigrationManager(db_connection)
-    
+
     # Register migrations
     manager.register(InitialSchemaMigration())
     manager.register(AddFraudScoresIndexMigration())
-    
+    manager.register(AddUserTablesMigration())
+
     # Apply migrations
     manager.migrate_up()
-    
+
     # Show status
     status = manager.status()
     logger.info(f"Migration status: {status}")

@@ -13,6 +13,8 @@ from .connection import (
 from .models import (
     Base,
     User,
+    CustomerUser,
+    StaffUser,
     Patient,
     Hospital,
     Claim,
@@ -25,6 +27,13 @@ from .operations import (
     ClaimOperations,
     PatientOperations,
     HospitalOperations,
+)
+
+from .auth_operations import (
+    CustomerUserOperations,
+    StaffUserOperations,
+    hash_password,
+    verify_password,
 )
 
 from .migrations import (
@@ -50,6 +59,8 @@ __all__ = [
     # Models
     "Base",
     "User",
+    "CustomerUser",
+    "StaffUser",
     "Patient",
     "Hospital",
     "Claim",
@@ -60,6 +71,11 @@ __all__ = [
     "ClaimOperations",
     "PatientOperations",
     "HospitalOperations",
+    # Auth Operations
+    "CustomerUserOperations",
+    "StaffUserOperations",
+    "hash_password",
+    "verify_password",
     # Migrations
     "MigrationManager",
     "migrate_database",
